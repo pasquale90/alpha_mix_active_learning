@@ -558,10 +558,10 @@ def al_train_sub_experiment(args, train_args, train_params, strategy_name, gener
     if strategy_name == 'CDALSampling':
         model = CDALModel(net, net_args, handler, train_params, writer, device, init_model=True)
     else:
-        model = Training(net, net_args, handler, train_params, writer, device, init_model=True)
+        model = Training(net, net_args, handler, train_params, writer, device, init_model=True)             # defines model
 
     cls = globals()[strategy_name]
-    strategy = cls(X_tr, Y_tr, idxs_lb, X_val, Y_val, model, args, device, writer)
+    strategy = cls(X_tr, Y_tr, idxs_lb, X_val, Y_val, model, args, device, writer)                          # initializes qs
 
     # print info
     print(args.data_name)
@@ -569,8 +569,8 @@ def al_train_sub_experiment(args, train_args, train_params, strategy_name, gener
     print(type(strategy).__name__)
 
     # round 0 accuracy
-    strategy.train(name='0')
-    P = strategy.predict(X_te, Y_te)
+    strategy.train(name='0') # train the first round. using the training split.                             # train for the 1st round 
+    P = strategy.predict(X_te, Y_te) # pass the testing split (with the labels)
     acc = np.zeros(args.n_round + 1)
     acc[0] = 1.0 * (Y_te == P).sum().item() / len(Y_te)
     print('Round 0\ntesting accuracy {}'.format(acc[0]))
@@ -579,14 +579,15 @@ def al_train_sub_experiment(args, train_args, train_params, strategy_name, gener
     result_writer.writerow([acc[0], 0.])
     result_file.flush()
 
-    for rd in range(1, args.n_round + 1):
+    for rd in range(1, args.n_round + 1):                                                                   
         print('Round {}'.format(rd))
 
         start_time = time.time()
 
         budget = args.n_query * int(math.pow(args.query_growth_ratio, rd - 1))
         print('query budget: %d' % budget)
-        q_idxs, embeddings, preds, probs, u_idxs, candidate_idxs = strategy.query(budget)
+
+        q_idxs, embeddings, preds, probs, u_idxs, candidate_idxs = strategy.query(budget)                   # gives the resulted queries
 
         duration = time.time() - start_time
 
@@ -666,14 +667,14 @@ def get_query_diversity_uncertainty(embeddings, gt_y, p_y, probs, writer, rd):
     writer.add_scalar('selection_statistics/margin', margin, rd)
 
     from scipy.stats import entropy
-    p = np.zeros(probs.size(1), dtype=np.float)
+    p = np.zeros(probs.size(1), dtype=float)
     for i in range(probs.size(1)):
         p[i] = (p_y == i).sum().item() / p_y.size(0)
     ent = entropy(p)
     print('Predicted Entropy: %f' % ent)
     writer.add_scalar('selection_statistics/predicted_entropy', ent, rd)
 
-    p = np.zeros(probs.size(1), dtype=np.float)
+    p = np.zeros(probs.size(1), dtype=float)
     for i in range(probs.size(1)):
         p[i] = (gt_y == i).sum().item() / p_y.size(0)
     ent = entropy(p)
@@ -682,7 +683,7 @@ def get_query_diversity_uncertainty(embeddings, gt_y, p_y, probs, writer, rd):
 
     c = idxs[:, 0:2].min(dim=1)[0] * 1000 + idxs[:, 0:2].max(dim=1)[0]
     n = int(probs.size(1) * (probs.size(1) - 1) / 2)
-    p = np.zeros(n, dtype=np.float)
+    p = np.zeros(n, dtype=float)
     idx = 0
     for i in range(probs.size(1) - 1):
         for j in range(i + 1, probs.size(1)):

@@ -15,45 +15,82 @@ class AlphaMixSampling(Strategy):
 		super(AlphaMixSampling, self).__init__(X, Y, idxs_lb, X_val, Y_val, model, args, device, writer)
 
 	def query(self, n, idxs_prohibited=None):
-		self.query_count += 1
 
-		idxs = self.idxs_lb if idxs_prohibited is None else (self.idxs_lb + idxs_prohibited)
+		# idxs_prohibited=None at the first round
+
+		self.query_count += 1 # increments query_count by 1
+
+		''' idxs, idxs_unlabeled
+
+			idxs : the number of samples that are used for training. These are separated from the unlabeled pool.
+				type:bool
+				len:60.000
+				shape:(60.000,)
+				(Pdb) len(np.where(idxs==True)[0]) ---> 100  === n_init_lb (bash arg) 
+				
+			idxs_unlabeled : the labeled samples that are considered to be unlabeled. They are separated from the dataset
+				array 
+				type:int64
+				len:59.900
+				shape:(59.900,)
+
+		'''
+		idxs = self.idxs_lb if idxs_prohibited is None else (self.idxs_lb + idxs_prohibited) 
 		idxs_unlabeled = np.arange(self.n_pool)[~idxs]
 
+		''' predict_prob_embed FOR THE UNLABELED SAMPLES
+
+        input:
+            X: unlabeled images ,torch tensor of shape (samples,width,height) || (samples,height,width) of type torch.uint8
+            Y: actual labels    ,torch tensor of shape (samples) of type torch.int64 -----------------------> these labels are used for validating the alphamix-framework
+        output:
+            ulb_probs : embeddings that are passed through the fully connected + softmax, 
+                    torch tensor of shape (samples,{#classes}}), type torch.float32
+            org_ulb_embedding : embeddings exctracted from the backbone. 
+                        torch tensor of shape (samples,{train_params['emb_size']}), type torch.float32
+            
+        '''
 		ulb_probs, org_ulb_embedding = self.predict_prob_embed(self.X[idxs_unlabeled], self.Y[idxs_unlabeled])
 
-		probs_sorted, probs_sort_idxs = ulb_probs.sort(descending=True)
-		pred_1 = probs_sort_idxs[:, 0]
+		probs_sorted, probs_sort_idxs = ulb_probs.sort(descending=True) # sort the unlabeled probabilities
+		pred_1 = probs_sort_idxs[:, 0] 									# get the maximum probabilities for all unlabeled samples
 
+		'''predict_prob_embed FOR THE LABELED SAMPLES'''
 		lb_probs, org_lb_embedding = self.predict_prob_embed(self.X[self.idxs_lb], self.Y[self.idxs_lb])
 
-		ulb_embedding = org_ulb_embedding
-		lb_embedding = org_lb_embedding
+		ulb_embedding = org_ulb_embedding 	# copy unlabeled embeddings
+		lb_embedding = org_lb_embedding 	# copy labeled embeddings
 
-		unlabeled_size = ulb_embedding.size(0)
-		embedding_size = ulb_embedding.size(1)
+		unlabeled_size = ulb_embedding.size(0) # Number of unlabeled samples
+		embedding_size = ulb_embedding.size(1) # Number of dims of the feature descriptor
 
-		min_alphas = torch.ones((unlabeled_size, embedding_size), dtype=torch.float)
-		candidate = torch.zeros(unlabeled_size, dtype=torch.bool)
+		min_alphas = torch.ones((unlabeled_size, embedding_size), dtype=torch.float) 	# torch tensor of ones , of shape (#numsamples,featureVec_size)
+		candidate = torch.zeros(unlabeled_size, dtype=torch.bool)						# torch tensor of zeros, of shape(#numsamples)
 
-		if self.args.alpha_closed_form_approx:
+		if self.args.alpha_closed_form_approx:											# alpha_closed_form_approx scenario
 			var_emb = Variable(ulb_embedding, requires_grad=True).to(self.device)
 			out, _ = self.model.clf(var_emb, embedding=True)
 			loss = F.cross_entropy(out, pred_1.to(self.device))
 			grads = torch.autograd.grad(loss, var_emb)[0].data.cpu()
 			del loss, var_emb, out
-		else:
+		else:																			# scenario of alpha_learnable
 			grads = None
 
 		alpha_cap = 0.
 		while alpha_cap < 1.0:
-			alpha_cap += self.args.alpha_cap
+			alpha_cap += self.args.alpha_cap											# default vaj self.args.alpha_cap=0.03125
 
+# WE ARE SEARCHING FOR THE PSEUDOLABEL y* and the LOSS INCURRED WITH THE INTERPOLATION
+# We consider interpolating an unlabelled instance with all
+# the anchors representing different classes to uncover the
+# sufficiently distinct features by considering how the model’s
+# prediction changes.
+			# returns potential candidates and minimum values for alpha.
 			tmp_pred_change, tmp_min_alphas = \
-				self.find_candidate_set(
-					lb_embedding, ulb_embedding, pred_1, ulb_probs, alpha_cap=alpha_cap,
-					Y=self.Y[self.idxs_lb],
-					grads=grads)
+						self.find_candidate_set(	
+							lb_embedding, ulb_embedding, pred_1, ulb_probs, alpha_cap=alpha_cap,
+							Y=self.Y[self.idxs_lb],
+							grads=grads)
 
 			is_changed = min_alphas.norm(dim=1) >= tmp_min_alphas.norm(dim=1)
 
@@ -79,7 +116,7 @@ class AlphaMixSampling(Strategy):
 
 			c_alpha = F.normalize(org_ulb_embedding[candidate].view(candidate.sum(), -1), p=2, dim=1).detach()
 
-			selected_idxs = self.sample(min(n, candidate.sum().item()), feats=c_alpha)
+			selected_idxs = self.sample(min(n, candidate.sum().item()), feats=c_alpha)							# clustering
 			u_selected_idxs = candidate.nonzero(as_tuple=True)[0][selected_idxs]
 			selected_idxs = idxs_unlabeled[candidate][selected_idxs]
 		else:
@@ -93,8 +130,9 @@ class AlphaMixSampling(Strategy):
 			print('picked %d samples from RandomSampling.' % (remained))
 
 		return np.array(selected_idxs), ulb_embedding, pred_1, ulb_probs, u_selected_idxs, idxs_unlabeled[candidate]
-
-	def find_alpha(self):
+	
+############################################################################################################################### is find_alpha called anywhere?????????
+	def find_alpha(self):																							
 		assert self.args.alpha_num_mix <= self.args.n_label - (
 			0 if self.args.alpha_use_highest_class_mix else 1), 'c_num_mix should not be greater than number of classes'
 
@@ -138,9 +176,22 @@ class AlphaMixSampling(Strategy):
 		return 0.5
 
 	def find_candidate_set(self, lb_embedding, ulb_embedding, pred_1, ulb_probs, alpha_cap, Y, grads):
+		'''
+		input:
+			lb_embedding 	: the labeled features
+			ulb_embedding 	: the unlabeled features
+			pred_1			: the MAXIMUM classification scores of all unlabeled samples (Argmax is applied)
+			ulb_probs		: the UNSORTED classification scores of all unlabeled samples (for all available classes)
+			alpha_cap 		: alpha_cap
+			Y
+			grads ??? ==None
 
-		unlabeled_size = ulb_embedding.size(0)
-		embedding_size = ulb_embedding.size(1)
+		output:
+			pred_change 	: the potential candidates out of the unlabeled pool
+			min_alphas		: the minimum values of alpha.
+		'''
+		unlabeled_size = ulb_embedding.size(0)										# Number of unlabeled samples
+		embedding_size = ulb_embedding.size(1)										# Number of dims of the feature descriptor
 
 		min_alphas = torch.ones((unlabeled_size, embedding_size), dtype=torch.float)
 		pred_change = torch.zeros(unlabeled_size, dtype=torch.bool)
@@ -149,13 +200,15 @@ class AlphaMixSampling(Strategy):
 			alpha_cap /= math.sqrt(embedding_size)
 			grads = grads.to(self.device)
 			
-		for i in range(self.args.n_label):
-			emb = lb_embedding[Y == i]
-			if emb.size(0) == 0:
-				emb = lb_embedding
-			anchor_i = emb.mean(dim=0).view(1, -1).repeat(unlabeled_size, 1)
+		for i in range(self.args.n_label):														# for each class
 
-			if self.args.alpha_closed_form_approx:
+			emb = lb_embedding[Y == i]																# emb = embeddings of labeled samples for class==i									
+			if emb.size(0) == 0:	
+				emb = lb_embedding																	# ????										
+			anchor_i = emb.mean(dim=0).view(1, -1).repeat(unlabeled_size, 1)						# anchor of class i = the mean of emb (that is the mean of all labeled features for that specific class)
+																									# here the ".repeat(unlabeled_size, 1)" makes a copy of the anchor_i in #num_unlabeled_samples positions
+
+			if self.args.alpha_closed_form_approx:													# scenario of alpha_closed_form_approx
 				embed_i, ulb_embed = anchor_i.to(self.device), ulb_embedding.to(self.device)
 				alpha = self.calculate_optimum_alpha(alpha_cap, embed_i, ulb_embed, grads)
 
@@ -165,10 +218,11 @@ class AlphaMixSampling(Strategy):
 				alpha = alpha.cpu()
 
 				pc = out.argmax(dim=1) != pred_1
-			else:
-				alpha = self.generate_alpha(unlabeled_size, embedding_size, alpha_cap)
+			else:																					# scenario of alpha_learnable	--> SKILLPOINT find_candidate_set
+				alpha = self.generate_alpha(unlabeled_size, embedding_size, alpha_cap)				# generate_alpha creates an α value for each unlabeled feature vector, in the range [1e-8, alpha_cap]. Both mean & std of all α == alpha_cap/2
+
 				if self.args.alpha_opt:
-					alpha, pc = self.learn_alpha(ulb_embedding, pred_1, anchor_i, alpha, alpha_cap,
+					alpha, pc = self.learn_alpha(ulb_embedding, pred_1, anchor_i, alpha, alpha_cap,	# ARGS:alpha carries the minimum a, and pc holds all the potential candidates, OUT: alpha is defined(learned),pc holds all the inconsistencies
 												 log_prefix=str(i))
 				else:
 					embedding_mix = (1 - alpha) * ulb_embedding + alpha * anchor_i
@@ -176,7 +230,7 @@ class AlphaMixSampling(Strategy):
 					out = out.detach().cpu()
 
 					pc = out.argmax(dim=1) != pred_1
-
+				
 			torch.cuda.empty_cache()
 			self.writer.add_scalar('stats/inconsistencies_%d' % i, pc.sum().item(), self.query_count)
 
@@ -196,6 +250,17 @@ class AlphaMixSampling(Strategy):
 		return alpha
 
 	def sample(self, n, feats):
+		'''
+		input:
+			n		: the number of samples requested
+			feats	: the candidate feature embeddings
+		
+		N clusters are made. 
+		The feature that is closer to the center of each cluster is selected.
+		
+		output:
+			n number of samples out of the candidates.
+		'''
 		feats = feats.numpy()
 		cluster_learner = KMeans(n_clusters=n)
 		cluster_learner.fit(feats)
@@ -212,73 +277,138 @@ class AlphaMixSampling(Strategy):
 		return embeddings.mean(dim=0).view(1, -1).repeat(count, 1)
 
 	def generate_alpha(self, size, embedding_size, alpha_cap):
+		'''
+		size 			: Number of unlabeled samples
+		embedding_size 	: Number of dims of the feature descriptor
+		'''
+		# torch.normal : Returns a tensor of random numbers drawn from separate normal distributions whose mean and standard deviation are given.
 		alpha = torch.normal(
 			mean=alpha_cap / 2.0,
 			std=alpha_cap / 2.0,
 			size=(size, embedding_size))
-
-		alpha[torch.isnan(alpha)] = 1
-
-		return self.clamp_alpha(alpha, alpha_cap)
+		alpha[torch.isnan(alpha)] = 1										# if nan in any of the (size x embedding_size), then make 1.
+		i=self.clamp_alpha(alpha, alpha_cap)				
+		return i							# clamps alpha into range [1e-8, alpha_cap] - alpha_cap is the maximum value
 
 	def clamp_alpha(self, alpha, alpha_cap):
-		return torch.clamp(alpha, min=1e-8, max=alpha_cap)
+		'''
+		torch.clamp:
+			Clamps all elements in input into the range [ min, max ]. Letting min_value and max_value be min and max, respectively, this returns:
+				yi​=min(max(xi​,min_valuei​),max_valuei​)
+			Note: If min is greater than max torch.clamp(..., min, max) sets all elements in input to the value of max.
 
-	def learn_alpha(self, org_embed, labels, anchor_embed, alpha, alpha_cap, log_prefix=''):
+			It simply trims the range of values by setting a lower and an upper threshold.
+			Each value lower than the lower_thres becomes equal to the lower_thres.
+			Each value greater than the upper_thres becomes equal to the upper_thres.
+		'''
+		return torch.clamp(alpha, min=1e-8, max=alpha_cap)
+					  # ulb_embedding, pred_1, anchor_i, alpha, alpha_cap,log_prefix=str(i))
+	def learn_alpha(self, org_embed, labels, anchor_embed, alpha, alpha_cap, log_prefix=''): # ALFA IS A LEARNABLE.
+		
+		'''
+		org_embed		: all unlabeled embeddings						size:(#unl_samples, embedding_dim)
+		labels			: The predicted class of unlabeled classes		size:(#unl_samples)
+		anchor_embed	: class-specific anchor for each un_sample		size:(#unl_samples, embedding_dim)			* all in all there are #unl_samples copies of the class-specifi anchor. I.e. simply print $anchor_embed[0] && $anchor_embed[-1]
+		alpha			: alpha for each unlabeled sample				size:(#unl_samples, embedding_dim)			* for each value in each embedding, an alpha is generated
+		alpha_cap		: the maximum value of α
+		log_prefix=''	: string representing the AL round
+
+		for each alpha_learning_iteration
+			for each batch
+
+				l <- copy alpha to l
+				mix features
+				pass mixed_features batch through the model
+				calculate loss between pseudo-labels and predictions
+				update the min_alpha(array of ones) only for the samples that presented inconsistency in model's predictions. Update with the default values generated by the generate_alpha. Therefore, only some of the generated alpha will be kept.
+		'''
+
 		labels = labels.to(self.device)
-		min_alpha = torch.ones(alpha.size(), dtype=torch.float)
-		pred_changed = torch.zeros(labels.size(0), dtype=torch.bool)
+		min_alpha = torch.ones(alpha.size(), dtype=torch.float)				# ones of shape (#unl_samples, embedding_dim). min_alpha globally contains the min values for alpha in all iterations. Before the first iteration these are set to the max value αε[0,1]
+		pred_changed = torch.zeros(labels.size(0), dtype=torch.bool)		# Falses of size (#unl_samples). Before 1st iteration, no sample has changed
 
 		loss_func = torch.nn.CrossEntropyLoss(reduction='none')
 
-		self.model.clf.eval()
+		self.model.clf.eval()												# ----> in eval mode --> https://discuss.pytorch.org/t/does-gradients-change-in-model-eval/127732/2
+																			# https://stackoverflow.com/questions/57323023/pytorch-loss-backward-and-optimizer-step-in-eval-mode-with-batch-norm-laye
 
-		for i in range(self.args.alpha_learning_iters):
+
+		for i in range(self.args.alpha_learning_iters):						# self.args.alpha_learning_iters == The number of iterations for learning alpha
 			tot_nrm, tot_loss, tot_clf_loss = 0., 0., 0.
-			for b in range(math.ceil(float(alpha.size(0)) / self.args.alpha_learn_batch_size)):
+			for b in range(math.ceil(float(alpha.size(0)) / self.args.alpha_learn_batch_size)):	# for each batch
 				self.model.clf.zero_grad()
 				start_idx = b * self.args.alpha_learn_batch_size
 				end_idx = min((b + 1) * self.args.alpha_learn_batch_size, alpha.size(0))
 
-				l = alpha[start_idx:end_idx]
-				l = torch.autograd.Variable(l.to(self.device), requires_grad=True)
-				opt = torch.optim.Adam([l], lr=self.args.alpha_learning_rate / (1. if i < self.args.alpha_learning_iters * 2 / 3 else 10.))
-				e = org_embed[start_idx:end_idx].to(self.device)
-				c_e = anchor_embed[start_idx:end_idx].to(self.device)
-				embedding_mix = (1 - l) * e + l * c_e
+				l = alpha[start_idx:end_idx]																	 	# batch-alpha
+				l = torch.autograd.Variable(l.to(self.device), requires_grad=True)									# alpha learnable
+				opt = torch.optim.Adam([l], lr=self.args.alpha_learning_rate / (1. if i < self.args.alpha_learning_iters * 2 / 3 else 10.)) # define optimizer
+				e = org_embed[start_idx:end_idx].to(self.device)													# all unlabeled embeddings
+				c_e = anchor_embed[start_idx:end_idx].to(self.device)												# class-specific anchor for each un_sample
+				embedding_mix = (1 - l) * e + l * c_e																# eq(1) => z̃α = αz* + (1 − α)zu
 
-				out, _ = self.model.clf(embedding_mix, embedding=True)
+				# comment:
+				# 	Since l(alpha) is small (i.e. torch.mean(l)=0.0156 , torch.std(l)=0.0112),
+				# 	... the 1-l (i.e. =0.9844) factor multiplied by the embedding of the unlabeled sample (e),
+				#	... indicates that the mix (embedding_mix) primarily preserves the features of the unlabeled sample ...
+				#	... whereas a smaller portion of the class-avg-feature (anchor) is contributing to the final fused embedding.
 
-				label_change = out.argmax(dim=1) != labels[start_idx:end_idx]
+				out, _ = self.model.clf(embedding_mix, embedding=True)												# pass through the model								
 
-				tmp_pc = torch.zeros(labels.size(0), dtype=torch.bool).to(self.device)
+				label_change = out.argmax(dim=1) != labels[start_idx:end_idx]				# IMPORTANT --> Comparison of predictions
+				# comment:
+				# 	label_change compares the predictions of the same model on two different inputs
+				# 		- unlabeled sample as it is
+				# 		- unlabeled sample fused with the class-achor
+
+				tmp_pc = torch.zeros(labels.size(0), dtype=torch.bool).to(self.device)								# copies label changes to tmp_pc
 				tmp_pc[start_idx:end_idx] = label_change
-				pred_changed[start_idx:end_idx] += tmp_pc[start_idx:end_idx].detach().cpu()
-
+				pred_changed[start_idx:end_idx] += tmp_pc[start_idx:end_idx].detach().cpu()							# stores the results in pred_changed
+				
 				tmp_pc[start_idx:end_idx] = tmp_pc[start_idx:end_idx] * (l.norm(dim=1) < min_alpha[start_idx:end_idx].norm(dim=1).to(self.device))
-				min_alpha[tmp_pc] = l[tmp_pc[start_idx:end_idx]].detach().cpu()
+				''' tmp_pc[start_idx:end_idx] = tmp_pc[start_idx:end_idx] * (l.norm(dim=1) < min_alpha[start_idx:end_idx].norm(dim=1).to(self.device))
 
-				clf_loss = loss_func(out, labels[start_idx:end_idx].to(self.device))
+				eq (5) in the paper
+				
+				l.norm(dim=1)	 											--> finds the norm of the alpha for each unlabeld sample
+				min_alpha[start_idx:end_idx].norm(dim=1).to(self.device)	--> Get the aggregated min alphas sample-wise.
+					--> norm => sqrt(sum(1^2+1^2+... (embedding_size_times) ...+1^2)) 
 
-				l2_nrm = torch.norm(l, dim=1)
+				Therefore:
+					> (l.norm(dim=1) < min_alpha[start_idx:end_idx].norm(dim=1).to(self.device))
+						returns a tensor of size #num_unlabeled_samples, with the minimum values of the alpha-norms are stored. 
+						In each alpha_learning_iteration these are updated.
+ 					> tmp_pc is updated for the indexes where the min alphas are 
 
-				clf_loss *= -1
+				'''
+				min_alpha[tmp_pc] = l[tmp_pc[start_idx:end_idx]].detach().cpu() 								# update the min_alpha(array of ones) only for the samples changed with the default values generated by the generate_alpha
 
-				loss = self.args.alpha_clf_coef * clf_loss + self.args.alpha_l2_coef * l2_nrm
-				loss.sum().backward(retain_graph=True)
+				clf_loss = loss_func(out, labels[start_idx:end_idx].to(self.device))							# calc loss -->this determines whether new novel features have been found
+
+				l2_nrm = torch.norm(l, dim=1)																	# calc norm of l --> this determines the model's sensitivity on those features
+				
+				clf_loss *= -1																					# invert the loss to maximize it
+
+				loss = self.args.alpha_clf_coef * clf_loss + self.args.alpha_l2_coef * l2_nrm					# eq (2) and (3) from the paper. => 1* (-loss) + 0.01*norm_of_alpha
+				loss.sum().backward(retain_graph=True)															# back-propagate the alpha
+																												# https://stackoverflow.com/questions/46774641/what-does-the-parameter-retain-graph-mean-in-the-variables-backward-method
+																												# https://discuss.pytorch.org/t/how-to-confirm-parameters-of-frozen-part-of-network-are-not-being-updated/142482/2?u=paschalis_m --> model does not update its weights, since self.model.clf.lm1.weight.grad==None && self.model.clf.lm2.weight.grad==None || before and after optim.step() 
 				opt.step()
 
-				l = self.clamp_alpha(l, alpha_cap)
+				l = self.clamp_alpha(l, alpha_cap)																# filter max values of alpha (truncate values that exceed the value of alpha_cap)
 
-				alpha[start_idx:end_idx] = l.detach().cpu()
+				alpha[start_idx:end_idx] = l.detach().cpu()														# update alpha values
 
 				tot_clf_loss += clf_loss.mean().item() * l.size(0)
 				tot_loss += loss.mean().item() * l.size(0)
 				tot_nrm += l2_nrm.mean().item() * l.size(0)
 
+				import pdb
+				pdb.set_trace()
+
 				del l, e, c_e, embedding_mix
 				torch.cuda.empty_cache()
-
+		
 		count = pred_changed.sum().item()
 		if pred_changed.sum() > 0:
 			self.writer.add_scalar('stats/inconsistencies_%s' % (log_prefix), count, self.query_count)
@@ -296,4 +426,3 @@ class AlphaMixSampling(Strategy):
 			self.writer.add_scalar('alpha_change/loss_%s' % (log_prefix), 0, self.query_count)
 
 		return min_alpha.cpu(), pred_changed.cpu()
-

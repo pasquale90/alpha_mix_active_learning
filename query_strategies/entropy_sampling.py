@@ -7,8 +7,20 @@ class EntropySampling(Strategy):
 		super(EntropySampling, self).__init__(X, Y, idxs_lb, X_val, Y_val, model, args, device, writer)
 
 	def query(self, n):
-		idxs_unlabeled = np.arange(self.n_pool)[~self.idxs_lb]
-		probs, embeddings = self.predict_prob_embed(self.X[idxs_unlabeled], self.Y[idxs_unlabeled])
+		import pdb
+		pdb.set_trace()
+		# n = *n_query, defined in the arguments
+
+		idxs_unlabeled = np.arange(self.n_pool)[~self.idxs_lb] # == list of the form [0,1,.....,#of_samples_in_the_unlabeled_pool]
+		'''
+		in the 
+		probs, embeddings = self.predict_prob_embed(self.X[idxs_unlabeled], self.Y[idxs_unlabeled]) ,
+			eval=True
+
+		'''
+		probs, embeddings = self.predict_prob_embed(self.X[idxs_unlabeled], self.Y[idxs_unlabeled]) # eval=True, 
+
+		# Calculate Entropy --> https://en.wikipedia.org/wiki/Entropy_(information_theory) 
 		log_probs = torch.log(probs)
 		U = (probs*log_probs).sum(1)
 		selected = U.sort()[1][:n]

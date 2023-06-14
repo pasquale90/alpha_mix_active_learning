@@ -278,6 +278,17 @@ class Training(object):
         return probs
 
     def predict_prob_embed(self, X, Y, eval=True):
+        '''
+        input:
+            X: unlabeled images ,torch tensor of shape (samples,width,height) || (samples,height,width) of type torch.uint8
+            Y: actual labels    ,torch tensor of shape (samples) of type torch.int64 -----------------------> these labels are used for validating the alphamix-framework
+        output:
+            probs : embeddings that are passed through the fully connected + softmax, 
+                    torch tensor of shape (samples,{#classes}}), type torch.float32
+            embeddings : embeddings exctracted from the backbone. 
+                        torch tensor of shape (samples,{train_params['emb_size']}), type torch.float32
+            
+        '''
         loader_te = DataLoader(self.handler(X, Y, transform=self.args['test_transform']),
                                shuffle=False, **self.args['loader_te_args'])
 
@@ -288,7 +299,7 @@ class Training(object):
             with torch.no_grad():
                 for x, y, idxs in loader_te:
                     x, y = x.to(self.device), y.to(self.device)
-                    out, e1 = self.clf(x)
+                    out, e1 = self.clf(x)                                   # e1 is the embeddings, out is the results of classification used for obtaining scores. 
                     prob = F.softmax(out, dim=1)
                     probs[idxs] = prob.cpu()
                     embeddings[idxs] = e1.cpu()
