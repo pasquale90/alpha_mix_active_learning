@@ -80,7 +80,6 @@ class AlphaMixSampling(Strategy):
 		while alpha_cap < 1.0:
 			alpha_cap += self.args.alpha_cap											# default vaj self.args.alpha_cap=0.03125
 
-# WE ARE SEARCHING FOR THE PSEUDOLABEL y* and the LOSS INCURRED WITH THE INTERPOLATION
 # We consider interpolating an unlabelled instance with all
 # the anchors representing different classes to uncover the
 # sufficiently distinct features by considering how the model’s
@@ -355,7 +354,7 @@ class AlphaMixSampling(Strategy):
 
 				out, _ = self.model.clf(embedding_mix, embedding=True)												# pass through the model								
 
-				label_change = out.argmax(dim=1) != labels[start_idx:end_idx]				# IMPORTANT --> Comparison of predictions
+				label_change = out.argmax(dim=1) != labels[start_idx:end_idx]										# Comparison of predictions
 				# comment:
 				# 	label_change compares the predictions of the same model on two different inputs
 				# 		- unlabeled sample as it is
@@ -402,9 +401,6 @@ class AlphaMixSampling(Strategy):
 				tot_clf_loss += clf_loss.mean().item() * l.size(0)
 				tot_loss += loss.mean().item() * l.size(0)
 				tot_nrm += l2_nrm.mean().item() * l.size(0)
-
-				import pdb
-				pdb.set_trace()
 
 				del l, e, c_e, embedding_mix
 				torch.cuda.empty_cache()
