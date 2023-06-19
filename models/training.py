@@ -281,7 +281,7 @@ class Training(object):
         '''
         input:
             X: unlabeled images ,torch tensor of shape (samples,width,height) || (samples,height,width) of type torch.uint8
-            Y: actual labels    ,torch tensor of shape (samples) of type torch.int64 -----------------------> these labels are used for validating the alphamix-framework
+            Y: actual labels    ,torch tensor of shape (samples) of type torch.int64 -----------------------> (not applicable here, but : these labels are used for validating the alphamix-framework)
         output:
             probs : embeddings that are passed through the fully connected + softmax, 
                     torch tensor of shape (samples,{#classes}}), type torch.float32
@@ -303,6 +303,8 @@ class Training(object):
                     prob = F.softmax(out, dim=1)
                     probs[idxs] = prob.cpu()
                     embeddings[idxs] = e1.cpu()
+                    import pdb
+                    pdb.set_trace()
         else:
             self.clf.train()
             for x, y, idxs in loader_te:

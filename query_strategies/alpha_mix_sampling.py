@@ -55,8 +55,7 @@ class AlphaMixSampling(Strategy):
 		probs_sorted, probs_sort_idxs = ulb_probs.sort(descending=True) # sort the unlabeled probabilities
 		pred_1 = probs_sort_idxs[:, 0] 									# get the maximum probabilities for all unlabeled samples
 
-		'''predict_prob_embed FOR THE LABELED SAMPLES'''
-		lb_probs, org_lb_embedding = self.predict_prob_embed(self.X[self.idxs_lb], self.Y[self.idxs_lb])
+		lb_probs, org_lb_embedding = self.predict_prob_embed(self.X[self.idxs_lb], self.Y[self.idxs_lb]) # predict_prob_embed FOR THE LABELED SAMPLES
 
 		ulb_embedding = org_ulb_embedding 	# copy unlabeled embeddings
 		lb_embedding = org_lb_embedding 	# copy labeled embeddings
@@ -66,12 +65,27 @@ class AlphaMixSampling(Strategy):
 
 		min_alphas = torch.ones((unlabeled_size, embedding_size), dtype=torch.float) 	# torch tensor of ones , of shape (#numsamples,featureVec_size)
 		candidate = torch.zeros(unlabeled_size, dtype=torch.bool)						# torch tensor of zeros, of shape(#numsamples)
+		
+		if self.args.alpha_closed_form_approx:											# if alpha_closed_form_approx scenario is chosen, then
+			var_emb = Variable(ulb_embedding, requires_grad=True).to(self.device)			# wrap unlabeled_features with Variable for computing gradients
+			out, _ = self.model.clf(var_emb, embedding=True)								# pass unlabeled features through the model - these come without the Softmax.
+			loss = F.cross_entropy(out, pred_1.to(self.device))								# calculate the loss between 
+			import pdb
+			pdb.set_trace()
+			"""grads = torch.autograd.grad(loss, var_emb)[0].data.cpu()
+				Compute the grads for the each unlabeled sample.
+				The differential equation is between :
+					unlabeled features passed throught the model, and
+					unlabeled features passed throught the same model with the difference that these were not passed through all the linear layers as before.			
+			"""
+			grads = torch.autograd.grad(loss, var_emb)[0].data.cpu()						# COPMPUTE THE GRADIENTS W.R.T. the unlabeled embeddings?
+																							# https://pytorch.org/docs/stable/_modules/torch/autograd.html#grad
+																							# https://stackoverflow.com/questions/69148622/difference-between-autograd-grad-and-autograd-backward
 
-		if self.args.alpha_closed_form_approx:											# alpha_closed_form_approx scenario
-			var_emb = Variable(ulb_embedding, requires_grad=True).to(self.device)
-			out, _ = self.model.clf(var_emb, embedding=True)
-			loss = F.cross_entropy(out, pred_1.to(self.device))
-			grads = torch.autograd.grad(loss, var_emb)[0].data.cpu()
+																							# 					https://realpython.com/python-mutable-vs-immutable-types/ : mutable == in_place 
+																						# IS THAT ASSUMPTION ACCURATE?--> model's layers are not freezed anymore. The weights and biases of the model will get updated in a forward pass
+
+															# https://github.com/AminParvaneh/alpha_mix_active_learning/issues/10
 			del loss, var_emb, out
 		else:																			# scenario of alpha_learnable
 			grads = None
@@ -79,11 +93,13 @@ class AlphaMixSampling(Strategy):
 		alpha_cap = 0.
 		while alpha_cap < 1.0:
 			alpha_cap += self.args.alpha_cap											# default vaj self.args.alpha_cap=0.03125
-
-# We consider interpolating an unlabelled instance with all
-# the anchors representing different classes to uncover the
-# sufficiently distinct features by considering how the model’s
-# prediction changes.
+			
+			"""
+			We consider interpolating an unlabelled instance with all
+			the anchors representing different classes to uncover the
+			sufficiently distinct features by considering how the model’s
+			prediction changes.
+			"""
 			# returns potential candidates and minimum values for alpha.
 			tmp_pred_change, tmp_min_alphas = \
 						self.find_candidate_set(	
@@ -116,6 +132,7 @@ class AlphaMixSampling(Strategy):
 			c_alpha = F.normalize(org_ulb_embedding[candidate].view(candidate.sum(), -1), p=2, dim=1).detach()
 
 			selected_idxs = self.sample(min(n, candidate.sum().item()), feats=c_alpha)							# clustering
+			# selected_idxs = self.sample_DBSCAN(min(n, candidate.sum().item()), feats=c_alpha)							# clustering
 			u_selected_idxs = candidate.nonzero(as_tuple=True)[0][selected_idxs]
 			selected_idxs = idxs_unlabeled[candidate][selected_idxs]
 		else:
@@ -195,9 +212,9 @@ class AlphaMixSampling(Strategy):
 		min_alphas = torch.ones((unlabeled_size, embedding_size), dtype=torch.float)
 		pred_change = torch.zeros(unlabeled_size, dtype=torch.bool)
 
-		if self.args.alpha_closed_form_approx:
-			alpha_cap /= math.sqrt(embedding_size)
-			grads = grads.to(self.device)
+		if self.args.alpha_closed_form_approx:										# if closed_form_approx method is chosen, then
+			alpha_cap /= math.sqrt(embedding_size)										# maximum value for alpha is divided with the square root of embedding size
+			grads = grads.to(self.device)												# model's layers are not freezed
 			
 		for i in range(self.args.n_label):														# for each class
 
@@ -208,15 +225,18 @@ class AlphaMixSampling(Strategy):
 																									# here the ".repeat(unlabeled_size, 1)" makes a copy of the anchor_i in #num_unlabeled_samples positions
 
 			if self.args.alpha_closed_form_approx:													# scenario of alpha_closed_form_approx
-				embed_i, ulb_embed = anchor_i.to(self.device), ulb_embedding.to(self.device)
-				alpha = self.calculate_optimum_alpha(alpha_cap, embed_i, ulb_embed, grads)
-
-				embedding_mix = (1 - alpha) * ulb_embed + alpha * embed_i
-				out, _ = self.model.clf(embedding_mix, embedding=True)
+				embed_i, ulb_embed = anchor_i.to(self.device), ulb_embedding.to(self.device)		
+				alpha = self.calculate_optimum_alpha(alpha_cap, embed_i, ulb_embed, grads)			# dual norm calculation of the alpha --> refers to eq (5)
+				embedding_mix = (1 - alpha) * ulb_embed + alpha * embed_i							# the mix
+				out, _ = self.model.clf(embedding_mix, embedding=True)								# 
 				out = out.detach().cpu()
 				alpha = alpha.cpu()
 
 				pc = out.argmax(dim=1) != pred_1
+
+				import pdb
+				pdb.set_trace()
+
 			else:																					# scenario of alpha_learnable	--> SKILLPOINT find_candidate_set
 				alpha = self.generate_alpha(unlabeled_size, embedding_size, alpha_cap)				# generate_alpha creates an α value for each unlabeled feature vector, in the range [1e-8, alpha_cap]. Both mean & std of all α == alpha_cap/2
 
@@ -243,11 +263,74 @@ class AlphaMixSampling(Strategy):
 		return pred_change, min_alphas
 
 	def calculate_optimum_alpha(self, eps, lb_embedding, ulb_embedding, ulb_grads):
-		z = (lb_embedding - ulb_embedding) #* ulb_grads
-		alpha = (eps * z.norm(dim=1) / ulb_grads.norm(dim=1)).unsqueeze(dim=1).repeat(1, z.size(1)) * ulb_grads / (z + 1e-8)
+		'''
+		input:
+			eps 			: the maximum value of alpha which is defined differently in the alpha_closed_form_approx mode
+			lb_embedding	: the class-specific anchor
+			ulb_embedding	: the unlabeled embeddings
+			ulb_grads		: the gradients computed for the backprop 
+		'''
+		z = (lb_embedding - ulb_embedding) #* ulb_grads									# (z*-zu) : element-wise subtraction between anchor of a specific class with the feature of the unlabeled sample. Do it for all unlabeled samples.
+		alpha = (eps * z.norm(dim=1) / ulb_grads.norm(dim=1)).unsqueeze(dim=1).repeat(1, z.size(1)) * ulb_grads / (z + 1e-8)	# eq (5) 
 
+		# 				eps * z.norm(dim=1) (
+      	# 			/ulb_grads.norm(dim=1)
+		# 		)
+		# 		.unsqueeze(dim=1).repeat(1, z.size(1)) 
+		# 	* ulb_grads 
+		# /(z + 1e-8)
+		# alpha_cap, embed_i, ulb_embed, grads)
+		import pdb
+		pdb.set_trace()
 		return alpha
 
+	def sample_DBSCAN(self, n, feats):
+		'''
+		input:
+			n		: the number of samples requested
+			feats	: the candidate feature embeddings
+		
+		N clusters are made. 
+		The feature that is closer to the center of each cluster is selected.
+		
+		output:
+			n number of samples out of the candidates.
+		'''
+
+		
+		
+		
+		''' HDBSCAN
+		from sklearn.cluster import DBSCAN
+
+		import hdbscan
+		from sklearn.datasets import make_blobs
+
+		feats = feats.numpy()
+		
+		clustering = DBSCAN(eps=0.4, min_samples=1).fit(feats) # eps=0.5
+		labels=clustering.labels_
+		Nteams=len(np.unique(labels))
+		print(f"{Nteams} num teams")
+
+		clusterer = hdbscan.HDBSCAN(min_cluster_size=60, min_samples=1).fit(feats)
+		hdbscan.HDBSCAN(min_cluster_size=5, gen_min_span_tree=True).fit(feats)
+		import pdb
+		pdb.set_trace()
+		'''
+
+
+		# cluster_learner = KMeans(n_clusters=n)
+		# cluster_learner.fit(feats)
+
+		# cluster_idxs = cluster_learner.predict(feats)
+		# centers = cluster_learner.cluster_centers_[cluster_idxs]
+		# dis = (feats - centers) ** 2
+		# dis = dis.sum(axis=1)
+		# return np.array(
+		# 	[np.arange(feats.shape[0])[cluster_idxs == i][dis[cluster_idxs == i].argmin()] for i in range(n) if
+		# 	 (cluster_idxs == i).sum() > 0])
+	
 	def sample(self, n, feats):
 		'''
 		input:
@@ -321,7 +404,6 @@ class AlphaMixSampling(Strategy):
 				calculate loss between pseudo-labels and predictions
 				update the min_alpha(array of ones) only for the samples that presented inconsistency in model's predictions. Update with the default values generated by the generate_alpha. Therefore, only some of the generated alpha will be kept.
 		'''
-
 		labels = labels.to(self.device)
 		min_alpha = torch.ones(alpha.size(), dtype=torch.float)				# ones of shape (#unl_samples, embedding_dim). min_alpha globally contains the min values for alpha in all iterations. Before the first iteration these are set to the max value αε[0,1]
 		pred_changed = torch.zeros(labels.size(0), dtype=torch.bool)		# Falses of size (#unl_samples). Before 1st iteration, no sample has changed

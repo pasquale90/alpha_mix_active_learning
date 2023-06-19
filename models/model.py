@@ -171,6 +171,7 @@ class MLPNet(nn.Module):
         if embedding:
             emb = x
         else:
+            # x is an image
             x = x.view(-1, self.dim)
             emb = F.relu(self.lm1(x))
             if self.do:

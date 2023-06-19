@@ -763,7 +763,8 @@ if __name__ == "__main__":
     # AlphaMix hyper-parameters
     parser.add_argument('--alpha_cap', type=float, default=0.03125)
     parser.add_argument('--alpha_opt', action="store_const", default=False, const=True)
-    parser.add_argument('--alpha_closed_form_approx', action="store_const", default=False, const=True)
+    # parser.add_argument('--alpha_closed_form_approx', action="store_const", default=False, const=True)        #    ---> UNCOMMENT ME - default=False  FOR LEARNING ALPHA
+    parser.add_argument('--alpha_closed_form_approx', action="store_const", default=True, const=True)
 
     # Gradient descent Alpha optimisation
     parser.add_argument('--alpha_learning_rate', type=float, default=0.1,
