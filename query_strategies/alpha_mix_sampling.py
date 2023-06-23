@@ -70,8 +70,8 @@ class AlphaMixSampling(Strategy):
 			var_emb = Variable(ulb_embedding, requires_grad=True).to(self.device)			# wrap unlabeled_features with Variable for computing gradients
 			out, _ = self.model.clf(var_emb, embedding=True)								# pass unlabeled features through the model - these come without the Softmax.
 			loss = F.cross_entropy(out, pred_1.to(self.device))								# calculate the loss between 
-			import pdb
-			pdb.set_trace()
+			# import pdb
+			# pdb.set_trace()
 			"""grads = torch.autograd.grad(loss, var_emb)[0].data.cpu()
 				Compute the grads for the each unlabeled sample.
 				The differential equation is between :
@@ -234,8 +234,8 @@ class AlphaMixSampling(Strategy):
 
 				pc = out.argmax(dim=1) != pred_1
 
-				import pdb
-				pdb.set_trace()
+				# import pdb
+				# pdb.set_trace()
 
 			else:																					# scenario of alpha_learnable	--> SKILLPOINT find_candidate_set
 				alpha = self.generate_alpha(unlabeled_size, embedding_size, alpha_cap)				# generate_alpha creates an α value for each unlabeled feature vector, in the range [1e-8, alpha_cap]. Both mean & std of all α == alpha_cap/2
@@ -280,8 +280,8 @@ class AlphaMixSampling(Strategy):
 		# 	* ulb_grads 
 		# /(z + 1e-8)
 		# alpha_cap, embed_i, ulb_embed, grads)
-		import pdb
-		pdb.set_trace()
+		# import pdb
+		# pdb.set_trace()
 		return alpha
 
 	def sample_DBSCAN(self, n, feats):

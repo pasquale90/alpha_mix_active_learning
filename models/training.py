@@ -303,8 +303,8 @@ class Training(object):
                     prob = F.softmax(out, dim=1)
                     probs[idxs] = prob.cpu()
                     embeddings[idxs] = e1.cpu()
-                    import pdb
-                    pdb.set_trace()
+                    # import pdb
+                    # pdb.set_trace()
         else:
             self.clf.train()
             for x, y, idxs in loader_te:
