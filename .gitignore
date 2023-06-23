@@ -5,4 +5,4 @@ your_data_directory/*
 your_log_directory/*
 query_strategies/alpha_mix_sampling_DBSCAN.py
 _temp/
-./requirements.txt
+requirements.txt
