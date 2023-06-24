@@ -16,10 +16,16 @@ alpha_opt
 args="--data_name ${data_name} --data_dir ${data_dir} --log_dir ${log_directory} \
         --n_init_lb ${n_init_lb} --n_query ${n_query} --n_round ${n_round} --learning_rate ${learning_rate} --n_epoch ${n_epoch} --model ${model} \
         --strategy ${strategy} --alpha_opt"
-
 echo args
 
-source ~/miniconda3/etc/profile.d/conda.sh
-conda activate alphamix
+
+if [ ! -f ~/miniconda3/etc/profile.d/conda.sh ]
+then 
+        source /opt/conda/lib/python3.10/site-packages/conda/shell/etc/profile.d/conda.sh
+        conda activate alphamix
+else
+        source ~/miniconda3/etc/profile.d/conda.sh
+        conda activate alphamix
+fi
 
 python main.py ${args}

@@ -1,3 +1,18 @@
+# DOCKER
+step 1: build:
+
+$ nvidia-docker build --no-cache --tag alphamix:v1 .
+
+step2: run
+$ nvidia-docker run --rm -it alphamix:v1 /bin/bash
+
+(optional)(delete all images named alphamix):
+nvidia-docker rmi --force $(docker images -q 'alphamix' | uniq)
+
+--------------------------------------------------------------------------------------------------------------------------------------
+
+
+
 # Active Learning by Feature Mixing (ALFA-Mix)
 PyTorch implementation of ALFA-Mix. For details, read the paper [Active Learning by Feature Mixing](https://arxiv.org/abs/2203.07034), which is accepted in CVPR 2022.
 
