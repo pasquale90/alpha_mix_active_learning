@@ -1,14 +1,17 @@
 # DOCKER
 step 1: build:
-
+```bash
 $ nvidia-docker build --no-cache --tag alphamix:v1 .
-
-step2: run
+```
+step2: run:
+```bash
 $ nvidia-docker run --rm -it alphamix:v1 /bin/bash
+```
 
 (optional)(delete all images named alphamix):
+```bash
 nvidia-docker rmi --force $(docker images -q 'alphamix' | uniq)
-
+```
 --------------------------------------------------------------------------------------------------------------------------------------
 
 
