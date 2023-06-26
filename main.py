@@ -777,4 +777,12 @@ if __name__ == "__main__":
 
     args, _ = parser.parse_known_args()
 
+    print("\n\n###################################################### INTERNAL GPU CHECK ######################################################\n\n")
+    print("is_available ",torch.cuda.is_available())
+    print("device_count ",torch.cuda.device_count())
+    print("current device ",torch.cuda.current_device())
+    print("cuda.device ",torch.cuda.device(0))
+    print("device name ", torch.cuda.get_device_name(0))
+    print("\n\n################################################################################################################################\n\n")
+
     supervised_learning(args)

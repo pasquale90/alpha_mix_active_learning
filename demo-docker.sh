@@ -32,4 +32,4 @@ args="--data_name ${data_name} --data_dir ${data_dir} --log_dir ${log_directory}
 echo args
 
 
-nvidia-docker run --rm -it ${DOCKER_IMG}:${DOCKER_IMG_VERS} ${args}
+nvidia-docker run --rm -it --gpus all ${DOCKER_IMG}:${DOCKER_IMG_VERS} ${args}
