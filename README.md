@@ -1,11 +1,9 @@
 # DOCKER
-step 1: build:
+build and run:
+- step 1: initialize parameters within **demo-docker.sh**,
+- step 2: run the script by running:
 ```bash
-$ nvidia-docker build --no-cache --tag alphamix:v1 .
-```
-step2: run:
-```bash
-$ nvidia-docker run --rm -it alphamix:v1 /bin/bash
+bash demo-docker.sh
 ```
 
 (optional)(delete all images named alphamix):

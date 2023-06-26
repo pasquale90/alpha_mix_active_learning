@@ -1,6 +1,18 @@
 #!bin/bash
 
-# Dependencies for running docker
+DOCKER_IMG=alphamix
+DOCKER_IMG_VERS=v10
+
+
+# check if image is created
+if [[ "$(docker images -q ${DOCKER_IMG}:${DOCKER_IMG_VERS} 2> /dev/null)" == "" ]]; then
+  echo "is NOT created"
+  nvidia-docker build --no-cache --tag ${DOCKER_IMG}:${DOCKER_IMG_VERS} .
+else
+  echo "is created"
+fi
+
+# Dependencies that are passed as parameters to the docker app
 datetime=`date "+%Y%m%d%H%M%S"`
 data_name="MNIST"                                                               # DEFINE DATASET
 data_dir="your_data_directory/${datetime}"
@@ -20,4 +32,4 @@ args="--data_name ${data_name} --data_dir ${data_dir} --log_dir ${log_directory}
 echo args
 
 
-nvidia-docker run --rm -it alphamix:v7 ${args}
+nvidia-docker run --rm -it ${DOCKER_IMG}:${DOCKER_IMG_VERS} ${args}
