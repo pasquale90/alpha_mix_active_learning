@@ -1,5 +1,6 @@
 #!bin/bash
 
+# Dependencies for running docker
 datetime=`date "+%Y%m%d%H%M%S"`
 data_name="MNIST"                                                               # DEFINE DATASET
 data_dir="your_data_directory/${datetime}"
@@ -19,7 +20,4 @@ args="--data_name ${data_name} --data_dir ${data_dir} --log_dir ${log_directory}
 echo args
 
 
-source ~/miniconda3/etc/profile.d/conda.sh
-conda activate alphamix
-
-python main.py ${args}
+nvidia-docker run --rm -it alphamix:v7 ${args}
