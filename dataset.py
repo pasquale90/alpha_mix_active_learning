@@ -8,7 +8,7 @@ from PIL import Image
 import openml
 from sklearn.preprocessing import LabelEncoder
 import pickle
-from custom_dataset import get_birds,get_custom_dataset
+from custom_dataset import get_custom_dataset
 
 mini_domain_net_class_ids = {
     'bat': 20,
@@ -301,6 +301,42 @@ def get_openml(data_dir, dataset_id):
 
     return X_tr, Y_tr, X_te, Y_te
 
+from PIL import Image,ImageOps
+import pandas as pd
+from tqdm import tqdm
+BIRDS_IMSIZE=28
+def resize_with_padding(img, expected_size):
+    # print("id2=",id(img))
+
+    img.thumbnail((expected_size[0], expected_size[1]))
+    # print(img.size)
+    delta_width = expected_size[0] - img.size[0]
+    delta_height = expected_size[1] - img.size[1]
+    pad_width = delta_width // 2
+    pad_height = delta_height // 2
+    padding = (pad_width, pad_height, delta_width - pad_width, delta_height - pad_height)
+    return ImageOps.expand(img, padding)
+
+def get_birds(data_dir,w=BIRDS_IMSIZE,h=BIRDS_IMSIZE,ch=3):
+    data = pd.read_csv(os.path.join(data_dir,'birds.csv'),index_col=0)
+    train_data=data[data["data set"]=="train"]
+    test_data=data[data["data set"]=="test"]
+    X_tr=[Image.open(os.path.join(data_dir,im)) for im in train_data["filepaths"].tolist()]
+    for i in tqdm(range(len(X_tr))): 
+        if X_tr[i].size!=(w,h,ch):
+            X_tr[i] = resize_with_padding(X_tr[i], (w, h)) # resize image
+        X_tr[i]=np.asarray(X_tr[i])
+    X_tr=np.asarray(X_tr,dtype=np.uint8)
+    Y_tr= torch.as_tensor(train_data.index.to_numpy(),dtype=torch.int64)
+    X_te=[Image.open(os.path.join(data_dir,im)) for im in test_data["filepaths"].tolist()]
+    for i in tqdm(range(len(X_te))): 
+        if X_te[i].size!=(w,h,3):
+            X_te[i] = resize_with_padding(X_te[i],  (w, h)) # resize image
+        X_te[i]=np.asarray(X_te[i])
+    X_te=np.array(X_te,dtype=np.uint8)
+    Y_te= torch.as_tensor(test_data.index.to_numpy(),dtype=torch.int64)
+    
+    return X_tr, Y_tr, X_te, Y_te
 
 def get_handler(name):
     if name == 'MNIST':
@@ -401,23 +437,6 @@ class DataHandler5(Dataset):
 
     def __getitem__(self, index):
         x, y = self.X[index], self.Y[index]
-        return x, y, index
-
-    def __len__(self):
-        return len(self.X)
-
-class DataHandler6(Dataset):
-    def __init__(self, X, Y, transform=None):
-        self.X = X
-        self.Y = Y
-        self.transform = transform
-        
-    def __getitem__(self, index):
-        x, y = self.X[index], self.Y[index]
-        if self.transform is not None:
-            x = Image.fromarray(x)
-            x = self.transform(x)
-
         return x, y, index
 
     def __len__(self):
