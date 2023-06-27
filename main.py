@@ -7,6 +7,7 @@ import math
 
 import numpy as np
 from dataset import get_dataset, get_handler, is_openml
+from custom_dataset import create_train_params_pool
 from models.model import get_net, MLPNet
 from sklearn.manifold import TSNE
 from torchvision import transforms
@@ -44,6 +45,20 @@ ALL_STRATEGIES = [
     'GCNSampling'
 ]
 
+SUPPORTED_DATASETS=[
+    'MNIST',
+    'EMNIST',
+    'SVHN', 
+    'CIFAR10',
+    'CIFAR100', 
+    'MiniImageNet',
+    'domain_net-real', 
+    'mini_domain_net-real', 
+    'tiny_domain_net-real',
+    'openml_6', 
+    'openml_155',
+    'BIRDS'
+]
 
 def supervised_learning(args):
     # supervised training args
@@ -362,13 +377,50 @@ def supervised_learning(args):
              'lr_decay_epochs': train_args.lr_decay_epochs,
              'train_to_end': train_args.train_to_end,
              'n_early_stopping': train_args.n_early_stopping,
+             'continue_training': train_args.continue_training},
+        'BIRDS':
+            {'n_epoch': train_args.n_epoch,
+             'n_label': 525,
+             'n_training_set': 84635,
+             'image_size': 28,
+             'in_channels': 3,
+             'transform': transforms.Compose(
+                 [
+                     transforms.Resize((28, 28)),
+                     transforms.RandomHorizontalFlip(),
+                     transforms.ToTensor(),
+                     transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
+                 ]
+                 if train_args.data_augmentation else
+                 [
+                     transforms.Resize((28, 28)),
+                     transforms.ToTensor(),
+                     transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
+                 ]),
+             'test_transform': transforms.Compose(
+                 [
+                     #transforms.Resize((84, 84)),
+                     transforms.Resize((28, 28)),
+                     transforms.ToTensor(),
+                     transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
+                 ]),
+             'loader_tr_args': {'batch_size': train_args.batch_size, 'num_workers': 10},
+             'loader_te_args': {'batch_size': train_args.batch_size, 'num_workers': 10},
+             'optimizer_args': {'lr': train_args.learning_rate},    #, 'weight_decay': 5e-4},
+             'lr_decay_epochs': train_args.lr_decay_epochs,
+             'train_to_end': train_args.train_to_end,
+             'log_dir': './logs/mini_domain_net-real',
+             'n_early_stopping': train_args.n_early_stopping,
              'continue_training': train_args.continue_training}
     }
 
     if is_openml(args.data_name):
         train_params = train_params_pool['openml']
     else:
-        train_params = train_params_pool[args.data_name]
+        if args.data_name not in SUPPORTED_DATASETS:
+            train_params = create_train_params_pool(train_args)
+        else:
+            train_params = train_params_pool[args.data_name]
 
     train_params['optimizer'] = train_args.optimizer
     if train_args.optimizer == 'SGD':
@@ -390,6 +442,8 @@ def al_train(args, train_args, train_params, strategy_name):
     main_path = os.path.join(args.log_dir, args.data_name)
     if not os.path.exists(main_path):
         os.makedirs(main_path)
+
+    print (args)
 
     general_path = os.path.join(main_path,
                                 'init' + str(args.n_init_lb) + '_query' + str(args.n_query) + '_' + str(args.query_growth_ratio) +
@@ -472,7 +526,6 @@ def al_train_sub_experiment(args, train_args, train_params, strategy_name, gener
         np.random.shuffle(idxs_tmp)
         X_tr = X_tr[idxs_tmp]
         Y_tr = Y_tr[idxs_tmp]
-
         X_val = X_tr[-train_args.n_validation_set:]
         Y_val = Y_tr[-train_args.n_validation_set:]
     else:
@@ -490,6 +543,7 @@ def al_train_sub_experiment(args, train_args, train_params, strategy_name, gener
     idxs_lb = np.zeros(n_pool, dtype=bool)
     idxs_tmp = np.arange(n_pool)
     np.random.shuffle(idxs_tmp)
+
 
     if args.init_lb_method == 'general_random':
         idxs_lb[idxs_tmp[:args.n_init_lb]] = True
@@ -727,11 +781,7 @@ def visualise_results(all_embeddings, can_idxs, Y_tr, q_idxs, path):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="General active learning hyper-parameters")
 
-    parser.add_argument('--data_name', type=str, choices=['MNIST', 'EMNIST',
-                                                          'SVHN', 'CIFAR10',
-                                                          'CIFAR100', 'MiniImageNet',
-                                                          'domain_net-real', 'mini_domain_net-real', 'tiny_domain_net-real',
-                                                          'openml_6', 'openml_155'])
+    parser.add_argument('--data_name', type=str, choices=SUPPORTED_DATASETS)
     parser.add_argument('--n_label', type=int, default=10, help='The number of distinct classes in the dataset.')
 
     parser.add_argument('--data_dir', type=str, default='./data')

@@ -8,7 +8,7 @@ from PIL import Image
 import openml
 from sklearn.preprocessing import LabelEncoder
 import pickle
-
+from custom_dataset import get_birds,get_custom_dataset
 
 mini_domain_net_class_ids = {
     'bat': 20,
@@ -55,7 +55,6 @@ def is_openml(name):
 def get_openml_id(name):
     return int(name[7:])
 
-
 def get_dataset(name, data_dir):
     if name == 'MNIST':
         return get_MNIST(data_dir)
@@ -77,7 +76,10 @@ def get_dataset(name, data_dir):
         return get_Tiny_DomainNet_Real(data_dir)
     elif is_openml(name):
         return get_openml(data_dir, get_openml_id(name))
-
+    elif name == 'BIRDS':
+        return get_birds(data_dir)
+    else:   # if dataset not in SUPPORTED_DATASETS
+        return get_custom_dataset(name, data_dir)
 
 def get_MNIST(data_dir):
     raw_tr = datasets.MNIST(os.path.join(data_dir, 'MNIST'), train=True, download=True)
@@ -116,6 +118,7 @@ def get_CIFAR10(data_dir):
     Y_tr = torch.from_numpy(np.array(data_tr.targets))
     X_te = data_te.data
     Y_te = torch.from_numpy(np.array(data_te.targets))
+
     return X_tr, Y_tr, X_te, Y_te
 
 
@@ -319,8 +322,9 @@ def get_handler(name):
     elif name == 'tiny_domain_net-real':
         return DataHandler4
     elif is_openml(name):
-        return DataHandler5
-
+        return DataHandler3
+    elif name == 'BIRDS':
+        return DataHandler3
 
 class DataHandler1(Dataset):
     def __init__(self, X, Y, transform=None):
@@ -361,7 +365,7 @@ class DataHandler3(Dataset):
         self.X = X
         self.Y = Y
         self.transform = transform
-
+        
     def __getitem__(self, index):
         x, y = self.X[index], self.Y[index]
         if self.transform is not None:
@@ -397,6 +401,23 @@ class DataHandler5(Dataset):
 
     def __getitem__(self, index):
         x, y = self.X[index], self.Y[index]
+        return x, y, index
+
+    def __len__(self):
+        return len(self.X)
+
+class DataHandler6(Dataset):
+    def __init__(self, X, Y, transform=None):
+        self.X = X
+        self.Y = Y
+        self.transform = transform
+        
+    def __getitem__(self, index):
+        x, y = self.X[index], self.Y[index]
+        if self.transform is not None:
+            x = Image.fromarray(x)
+            x = self.transform(x)
+
         return x, y, index
 
     def __len__(self):
