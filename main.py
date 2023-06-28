@@ -418,6 +418,7 @@ def supervised_learning(args):
         train_params = train_params_pool['openml']
     else:
         if args.data_name not in SUPPORTED_DATASETS:
+            raise NotImplementedError
             train_params = create_train_params_pool(train_args)
         else:
             train_params = train_params_pool[args.data_name]
@@ -526,31 +527,43 @@ def al_train_sub_experiment(args, train_args, train_params, strategy_name, gener
         np.random.shuffle(idxs_tmp)
         X_tr = X_tr[idxs_tmp]
         Y_tr = Y_tr[idxs_tmp]
-        X_val = X_tr[-train_args.n_validation_set:]
-        Y_val = Y_tr[-train_args.n_validation_set:]
+
+        if args.data_name not in SUPPORTED_DATASETS:
+            # assert X_val!=None
+            # assert Y_val!=None
+            raise NotImplementedError
+        else:
+            X_val = X_tr[-train_args.n_validation_set:]
+            Y_val = Y_tr[-train_args.n_validation_set:]
     else:
         X_val = []
         Y_val = []
 
-    X_tr = X_tr[:min(train_params['n_training_set'], len(X_tr) - len(X_val))]
-    Y_tr = Y_tr[:min(train_params['n_training_set'], len(Y_tr) - len(Y_val))]
+    if args.data_name not in SUPPORTED_DATASETS:
+        raise NotImplementedError
+    else:
+        X_tr = X_tr[:min(train_params['n_training_set'], len(X_tr) - len(X_val))]
+        Y_tr = Y_tr[:min(train_params['n_training_set'], len(Y_tr) - len(Y_val))]
 
     # start experiment
     n_pool = len(Y_tr)
     n_test = len(Y_te)
 
-    # generate initial labeled pool
-    idxs_lb = np.zeros(n_pool, dtype=bool)
-    idxs_tmp = np.arange(n_pool)
-    np.random.shuffle(idxs_tmp)
+    if args.data_name not in SUPPORTED_DATASETS:
+        raise NotImplementedError
+    else:    
+        # generate initial labeled pool
+        idxs_lb = np.zeros(n_pool, dtype=bool)
+        idxs_tmp = np.arange(n_pool)
+        np.random.shuffle(idxs_tmp)
 
 
-    if args.init_lb_method == 'general_random':
-        idxs_lb[idxs_tmp[:args.n_init_lb]] = True
-    else:
-        for i in range(Y_tr.max().item() + 1):
-            idx = (Y_tr == i).nonzero().squeeze()
-            idxs_lb[idx[:args.n_init_lb]] = True
+        if args.init_lb_method == 'general_random':
+            idxs_lb[idxs_tmp[:args.n_init_lb]] = True
+        else:
+            for i in range(Y_tr.max().item() + 1):
+                idx = (Y_tr == i).nonzero().squeeze()
+                idxs_lb[idx[:args.n_init_lb]] = True
 
     print('number of labeled pool: {}'.format(idxs_lb.sum()))
     print('number of unlabeled pool: {}'.format(n_pool - idxs_lb.sum()))
