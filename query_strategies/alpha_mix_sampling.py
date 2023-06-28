@@ -70,8 +70,7 @@ class AlphaMixSampling(Strategy):
 			var_emb = Variable(ulb_embedding, requires_grad=True).to(self.device)			# wrap unlabeled_features with Variable for computing gradients
 			out, _ = self.model.clf(var_emb, embedding=True)								# pass unlabeled features through the model - these come without the Softmax.
 			loss = F.cross_entropy(out, pred_1.to(self.device))								# calculate the loss between 
-			# import pdb
-			# pdb.set_trace()
+			
 			"""grads = torch.autograd.grad(loss, var_emb)[0].data.cpu()
 				Compute the grads for the each unlabeled sample.
 				The differential equation is between :
@@ -136,13 +135,14 @@ class AlphaMixSampling(Strategy):
 			u_selected_idxs = candidate.nonzero(as_tuple=True)[0][selected_idxs]
 			selected_idxs = idxs_unlabeled[candidate][selected_idxs]
 		else:
-			selected_idxs = np.array([], dtype=np.int)
+			selected_idxs = np.array([], dtype=int)
 
 		if len(selected_idxs) < n:
 			remained = n - len(selected_idxs)
 			idx_lb = copy.deepcopy(self.idxs_lb)
 			idx_lb[selected_idxs] = True
 			selected_idxs = np.concatenate([selected_idxs, np.random.choice(np.where(idx_lb == 0)[0], remained)])
+
 			print('picked %d samples from RandomSampling.' % (remained))
 
 		return np.array(selected_idxs), ulb_embedding, pred_1, ulb_probs, u_selected_idxs, idxs_unlabeled[candidate]
