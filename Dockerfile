@@ -22,7 +22,6 @@ RUN rm -rf /opt/conda && \
 ## ADD CONDA PATH TO LINUX PATH 
 ENV PATH /opt/conda/bin:$PATH
 
-
 # RUN git clone https://github.com/pasquale90/${GIT_REPO}.git
 # RUN git checkout docker
 COPY . ${WORKDIR}
@@ -42,6 +41,11 @@ ENV CONDA_DEFAULT_ENV alphamix
 ## MAKE ALL BELOW RUN COMMANDS USE THE NEW CONDA ENVIRONMENT
 SHELL ["conda", "run", "-n", "alphamix", "/bin/bash", "-c"]
 
+# RUN mkdir ${WORKDIR}datasets/
+ENV DATASET_VOL /home/alphamix/datasets/
+RUN mkdir ${DATASET_VOL}
+# VOLUME ${DATASET_VOL}
 
 ENTRYPOINT [ "python", "main.py"]
+# ENTRYPOINT [ "sh", "-c", "/bin/bash"]
 # https://stackoverflow.com/a/67059519/15842840
