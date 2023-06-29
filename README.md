@@ -28,7 +28,8 @@ nvidia-docker rmi --force $(docker images -q 'alphamix' | uniq)
 
 --------------------------------------------------------------------------------------------------------------------------------------
 
-# ######################################## INSTRUCTIONS FOR THE [OFFICIAL REPOSITORY](https://github.com/AminParvaneh/alpha_mix_active_learning) ARE CITED BELLOW ########################################
+<>
+the official instructions of [alpha_mix_active_learning](https://github.com/AminParvaneh/alpha_mix_active_learning) ARE CITED BELLOW ########################################
 
 # Active Learning by Feature Mixing (ALFA-Mix)
 PyTorch implementation of ALFA-Mix. For details, read the paper [Active Learning by Feature Mixing](https://arxiv.org/abs/2203.07034), which is accepted in CVPR 2022.
