@@ -6,7 +6,7 @@ from PIL import Image,ImageOps
 import torch
 
 from torchvision import transforms
-from getsize import getsize
+# from _temp.getsize import getsize
 
 
 # Create custom train params  pool
