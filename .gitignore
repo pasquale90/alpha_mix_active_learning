@@ -7,6 +7,6 @@ query_strategies/alpha_mix_sampling_DBSCAN.py
 _temp/
 requirements.txt
 logs/
-.gitignore
-.dockerignore
+./.gitignore
+./.dockerignore
 clean_docker.sh
