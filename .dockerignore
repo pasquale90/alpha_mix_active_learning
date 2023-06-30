@@ -8,3 +8,5 @@ _temp/
 requirements.txt
 logs/
 BirdsDataset/
+./Dockerfile
+./demo-docker.sh

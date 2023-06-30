@@ -9,3 +9,4 @@ requirements.txt
 logs/
 .gitignore
 .dockerignore
+clean_docker.sh
