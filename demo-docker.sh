@@ -7,14 +7,15 @@ n_training_set=2625 #"/home/melissap/Desktop/LAGO/3.githubs/mfork/alpha_mix_acti
 datetime=`date "+%Y%m%d%H%M%S"`
 data_name="BIRDS" #                                                                # DEFINE DATASET
 data_dir="/home/melissap/Desktop/LAGO/3.githubs/mfork/alpha_mix_active_learning/your_data_directory/BirdsDataset"
+output_dir="/home/melissap/Desktop/LAGO/3.githubs/mfork/alpha_mix_active_learning/output"
 n_init_lb=2625                                                                   # DEFINE #LABELED SAMPLES
 n_query=70                                                                     # DEFINE #QUERIED SAMPLES
-n_round=10                                                                      # DEFINE #ROUNDS
+n_round=3                                                                      # DEFINE #ROUNDS
 ########################################################################################## Dependencies that are passed as parameters to the docker app - OPTIONAL
 log_directory="your_log_directory/${datetime}"
 learning_rate=0.001
-n_epoch=100                                                                     # DEFINE #EPOCHS PER ROUND
-model=mlp #vit_small
+n_epoch=3                                                                     # DEFINE #EPOCHS PER ROUND
+model=vit_small
 strategy=AlphaMixSampling #EntropySampling #RandomSampling                                        # DEFINE QS
 alpha_opt=true
 
@@ -37,18 +38,31 @@ if [ ! -z ${12:-${alpha_opt}} ] && ${alpha_opt} ; then args="${args} --alpha_opt
 printf "\n\tbash parameters : \n\t\t${args}\n\n"
 
 ################################################################# DOCKERIZATION ####################################################################################
+# create docker volumes to share I/O between host and container
+DOCKER_VOLUME_IN=${datetime}_alphamix_${data_name}
+DOCKER_VOLUME_OUT=${datetime}_alphamix_results
+docker volume create --sharing readonly ${DOCKER_VOLUME_IN}
+docker volume create --sharing all ${DOCKER_VOLUME_OUT}
 
+# Create a docker image
 DOCKER_IMG=alphamix
 DOCKER_IMG_VERS=v1
-DOCKER_VOLUME=${datetime}_${data_name}
-
 # check if image is created
 if [[ "$(docker images -q ${DOCKER_IMG}:${DOCKER_IMG_VERS} 2> /dev/null)" == "" ]]; then
   nvidia-docker build --no-cache --tag ${DOCKER_IMG}:${DOCKER_IMG_VERS} .
 fi
 
-# docker volume create ${DOCKER_VOLUME}
-nvidia-docker run --name=${datetime}_${data_name} -v ${data_dir}:/home/alphamix/datasets/${data_dir} --rm -it --gpus all ${DOCKER_IMG}:${DOCKER_IMG_VERS} ${args} /bin/bash
-# docker volume rm ${DOCKER_VOLUME}
+# run the container
+nvidia-docker run \
+      --name=${DOCKER_VOLUME_IN} -v ${data_dir}:/home/alphamix/datasets/${data_dir} \
+      --name=${DOCKER_VOLUME_OUT} -v ${output_dir}:/home/alphamix/output \
+      --rm -it --gpus all \
+      ${DOCKER_IMG}:${DOCKER_IMG_VERS} ${args} /bin/bash
+
+docker volume rm ${DOCKER_VOLUME_IN}
+docker volume rm ${DOCKER_VOLUME_OUT}
+# clean all
+# docker rmi --force $(docker images -q 'alphamix' | uniq) # ------> comment this line if you want the image to be saved
+# docker system prune
 # nvidia-docker run --rm -it --name devtest exp1 --mount type=volume,source=${data_dir},target=/home/alphamix/datasets/${data_dir} --gpus all ${DOCKER_IMG}:${DOCKER_IMG_VERS} ${args}
 ###################################################################################################################################################################

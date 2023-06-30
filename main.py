@@ -6,6 +6,7 @@ import time
 import math
 
 import numpy as np
+import pandas as pd
 from dataset import get_dataset, get_handler, is_openml
 from custom_dataset import create_train_params_pool
 from models.model import get_net, MLPNet
@@ -418,7 +419,7 @@ def supervised_learning(args):
         train_params = train_params_pool['openml']
     else:
         if args.data_name not in SUPPORTED_DATASETS:
-            raise NotImplementedError
+            
             train_params = create_train_params_pool(train_args)
         else:
             train_params = train_params_pool[args.data_name]
@@ -695,6 +696,20 @@ def al_train_sub_experiment(args, train_args, train_params, strategy_name, gener
         writer.add_scalar('test_accuracy', acc[rd], rd)
         result_writer.writerow([acc[rd], duration])
         result_file.flush()
+
+        # Store idxs in file 
+        result_idxs=pd.DataFrame(torch.where(query_result==True)[0].numpy())
+        resultspath=os.path.join(os.getcwd(),"output","results_round-"+str(rd)+".csv")
+        result_idxs.to_csv(resultspath,index=False,header=False)
+
+        resultspath=os.path.join(os.getcwd(),"output","results_round-"+str(rd)+".txt")
+        with open(resultspath, 'w') as f:
+            for line in result_idxs:
+                f.write(f"{line}\n")
+        
+        # import pdb
+        # pdb.set_trace()
+        # store 
 
     # print results
     print('SEED {}'.format(seed))
