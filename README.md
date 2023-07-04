@@ -29,7 +29,11 @@ nvidia-docker rmi --force $(docker images -q 'alphamix' | uniq)
 --------------------------------------------------------------------------------------------------------------------------------------
 <br></br>
 <br></br>
-<h3> the official instructions of </h3> [alpha_mix_active_learning](https://github.com/AminParvaneh/alpha_mix_active_learning) <h3>is cited below unchanged..</h4>
+<br></br>
+<br></br>
+<br></br>
+
+<sub> *the official instructions of [alpha_mix_active_learning](https://github.com/AminParvaneh/alpha_mix_active_learning) are cited below unchanged..*</sub>
 <br></br>
 <br></br>
 --------------------------------------------------------------------------------------------------------------------------------------
