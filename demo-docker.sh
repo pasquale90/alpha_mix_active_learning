@@ -1,16 +1,14 @@
 #!bin/bash
 
-n_label=525
-n_training_set=2625 #"/home/melissap/Desktop/LAGO/3.githubs/mfork/alpha_mix_active_learning/your_data_directory/BirdsDataset/birds.csv" #"/home/melissap/Desktop/LAGO/3.githubs/mfork/alpha_mix_active_learning/your_data_directory/v7/datapool.json"
-
 ########################################################################################## Dependencies that are passed as parameters to the docker app - REQUIRED
 datetime=`date "+%Y%m%d%H%M%S"`
 data_name="BIRDS" #                                                                # DEFINE DATASET
 data_dir="/home/melissap/Desktop/LAGO/3.githubs/mfork/alpha_mix_active_learning/your_data_directory/BirdsDataset"
 output_dir="/home/melissap/Desktop/LAGO/3.githubs/mfork/alpha_mix_active_learning/output"
-n_init_lb=2625                                                                   # DEFINE #LABELED SAMPLES
-n_query=70                                                                     # DEFINE #QUERIED SAMPLES
-n_round=3                                                                      # DEFINE #ROUNDS
+n_label=525                                                                                         # number of classes
+n_training_set=2625                                                                                 # DEFINE #LABELED SAMPLES
+n_query=70                                                                                          # DEFINE #QUERIED SAMPLES
+n_round=3                                                                                           # DEFINE #ROUNDS
 ########################################################################################## Dependencies that are passed as parameters to the docker app - OPTIONAL
 log_directory="your_log_directory/${datetime}"
 learning_rate=0.001
@@ -27,7 +25,7 @@ if [ ! -z ${1:-${datetime}} ]; then args="${args} --datetime ${datetime}"; fi
 if [ ! -z ${2:-${data_name}} ]; then args="${args} --data_name ${data_name}"; fi
 if [ ! -z ${3:-${data_dir}} ]; then args="${args} --data_dir datasets/${data_dir}"; fi
 if [ ! -z ${4:-${log_directory}} ]; then args="${args} --log_directory ${log_directory}"; fi
-if [ ! -z ${4:-${n_init_lb}} ]; then args="${args} --n_init_lb ${n_init_lb}"; fi
+if [ ! -z ${4:-${n_init_lb}} ]; then args="${args} --n_init_lb ${n_training_set}"; fi
 if [ ! -z ${6:-${n_query}} ]; then args="${args} --n_query ${n_query}"; fi
 if [ ! -z ${7:-${n_round}} ]; then args="${args} --n_round ${n_round}"; fi
 if [ ! -z ${8:-${learning_rate}} ]; then args="${args} --learning_rate ${learning_rate}"; fi
