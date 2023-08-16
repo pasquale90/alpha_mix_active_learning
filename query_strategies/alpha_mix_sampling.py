@@ -351,6 +351,9 @@ class AlphaMixSampling(Strategy):
 		centers = cluster_learner.cluster_centers_[cluster_idxs]
 		dis = (feats - centers) ** 2
 		dis = dis.sum(axis=1)
+
+		import pdb 
+		pdb.set_trace()
 		return np.array(
 			[np.arange(feats.shape[0])[cluster_idxs == i][dis[cluster_idxs == i].argmin()] for i in range(n) if
 			 (cluster_idxs == i).sum() > 0])
