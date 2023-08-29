@@ -129,8 +129,11 @@ class AlphaMixSampling(Strategy):
 			self.writer.add_scalar('stats/alpha_mean_std', min_alphas[candidate].std(dim=1).mean().item(), self.query_count)
 
 			c_alpha = F.normalize(org_ulb_embedding[candidate].view(candidate.sum(), -1), p=2, dim=1).detach()
-
-			selected_idxs = self.sample(min(n, candidate.sum().item()), feats=c_alpha)							# clustering
+# IN THIS PARTH OF THE CODE WE DO OUR RESEARCH
+			import pdb
+			pdb.set_trace()
+			# selected_idxs = self.sample(min(n, candidate.sum().item()), feats=c_alpha)							# clustering
+			selected_idxs = self.sample_newMethod(min(n, candidate.sum().item()), feats=c_alpha)							# clustering
 			# selected_idxs = self.sample_DBSCAN(min(n, candidate.sum().item()), feats=c_alpha)							# clustering
 			u_selected_idxs = candidate.nonzero(as_tuple=True)[0][selected_idxs]
 			selected_idxs = idxs_unlabeled[candidate][selected_idxs]
@@ -249,9 +252,15 @@ class AlphaMixSampling(Strategy):
 					out = out.detach().cpu()
 
 					pc = out.argmax(dim=1) != pred_1
-				
+					
+					# find the inconsistencies - get the classes
+					
+				# import pdb
+				# pdb.set_trace()
+
 			torch.cuda.empty_cache()
 			self.writer.add_scalar('stats/inconsistencies_%d' % i, pc.sum().item(), self.query_count)
+
 
 			alpha[~pc] = 1.
 			pred_change[pc] = True
@@ -284,6 +293,116 @@ class AlphaMixSampling(Strategy):
 		# pdb.set_trace()
 		return alpha
 
+	#cosine similarities
+	def sample_newMethod(self, n, feats):
+		'''
+		input:
+			n		: the number of samples requested
+			feats	: the candidate feature embeddings
+		
+		N clusters are made. 
+		The feature that is closer to the center of each cluster is selected.
+		
+		output:
+			n number of samples out of the candidates.
+		'''
+		
+		
+		from scipy import sparse
+
+		features=feats.numpy()
+
+		A_sparse = sparse.csr_matrix(features)
+
+		#similarity_matrix
+		def similarity_matrix():
+			from sklearn.metrics.pairwise import cosine_similarity
+
+			similarities = cosine_similarity(A_sparse)
+			print('pairwise dense output:\n {}\n'.format(similarities))
+
+			#also can output sparse matrices
+			similarities_sparse = cosine_similarity(A_sparse,dense_output=False)
+			print('pairwise sparse output:\n {}\n'.format(similarities_sparse))
+			
+			
+			# l2_nrm=torch.norm(features,dim=1,p=2)
+			# l2_v1=torch.norm(features,dim=1)
+			# l2_v2=torch.linalg.norm(features, dim=1, ord = 2)
+			# l2_v3=features.pow(2).sum(dim=1).sqrt()
+		
+#distance matrix
+# def distance_matrix():
+		from sklearn.metrics import pairwise_distances
+
+		distances=pairwise_distances(features,metric="euclidean") # metric="l2"
+		
+		# np.fill_diagonal(distances, None)
+
+		min_distance_from_sample=np.min(distances,axis=1,where=np.greater(distances,0.0),initial=distances[0,1])
+		# connected_nodes=np.argwhere(distances==min_distance_from_sample)
+		connected_nodes = [(i,np.where(distances[i]==min_distance_from_sample[i])[0][0]) for i in range(len(min_distance_from_sample))]
+
+			# distances2=pairwise_distances(features,metric="l2")
+			# distances_=pairwise_distances(A_sparse,metric="euclidean") # metric="l2"
+			# distances2_=pairwise_distances(A_sparse,metric="l2")
+# return distances
+# distances=distance_matrix()
+
+# Kmeans
+# def KMeans_centers():
+		cluster_learner = KMeans(n_clusters=self.args.n_label)
+		cluster_learner.fit(feats)
+
+		cluster_idxs = cluster_learner.predict(feats)
+		kmcenters=cluster_learner.cluster_centers_
+		dist_count=np.unique(cluster_idxs, return_counts=True)
+			# import pdb
+			# pdb.set_trace()
+		centers = cluster_learner.cluster_centers_[cluster_idxs]
+		dis__ = (feats - centers)
+		dis_ = (feats - centers) ** 2
+		dis = dis_.sum(axis=1)
+# return centers
+# centers=KMeans_centers()
+
+
+# def distance_from_centers():
+		from sklearn.metrics import pairwise_distances
+
+		distancesfcenters=pairwise_distances(features,kmcenters,metric="euclidean") # metric="l2"
+
+		min_distance_from_center=np.min(distancesfcenters,axis=1)
+		import pdb
+		pdb.set_trace()
+		# distances2=pairwise_distances(features,metric="l2")
+		# distances_=pairwise_distances(A_sparse,metric="euclidean") # metric="l2"
+		# distances2_=pairwise_distances(A_sparse,metric="l2")
+# return distancesfcenters
+# distance_from_centers()
+
+		import pdb
+		pdb.set_trace()
+
+		#'' HDBSCAN
+		from sklearn.cluster import DBSCAN
+
+		import hdbscan
+		from sklearn.datasets import make_blobs
+
+		
+		
+		clustering = DBSCAN(eps=0.4, min_samples=1).fit(features) # eps=0.5
+		labels=clustering.labels_
+		Nteams=len(np.unique(labels))
+		print(f"{Nteams} num teams")
+
+		clusterer = hdbscan.HDBSCAN(min_cluster_size=60, min_samples=1).fit(features)
+		hdbscan.HDBSCAN(min_cluster_size=5, gen_min_span_tree=True).fit(features)
+		import pdb
+		pdb.set_trace()
+		#''
+
 	def sample_DBSCAN(self, n, feats):
 		'''
 		input:
@@ -296,8 +415,6 @@ class AlphaMixSampling(Strategy):
 		output:
 			n number of samples out of the candidates.
 		'''
-
-		
 		
 		
 		''' HDBSCAN
@@ -330,7 +447,11 @@ class AlphaMixSampling(Strategy):
 		# return np.array(
 		# 	[np.arange(feats.shape[0])[cluster_idxs == i][dis[cluster_idxs == i].argmin()] for i in range(n) if
 		# 	 (cluster_idxs == i).sum() > 0])
-	
+
+		import pdb 
+		pdb.set_trace()
+		
+
 	def sample(self, n, feats):
 		'''
 		input:
@@ -352,11 +473,7 @@ class AlphaMixSampling(Strategy):
 		dis = (feats - centers) ** 2
 		dis = dis.sum(axis=1)
 
-		import pdb 
-		pdb.set_trace()
-		return np.array(
-			[np.arange(feats.shape[0])[cluster_idxs == i][dis[cluster_idxs == i].argmin()] for i in range(n) if
-			 (cluster_idxs == i).sum() > 0])
+		return np.array([np.arange(feats.shape[0])[cluster_idxs == i][dis[cluster_idxs == i].argmin()] for i in range(n) if (cluster_idxs == i).sum() > 0])
 
 	def retrieve_anchor(self, embeddings, count):
 		return embeddings.mean(dim=0).view(1, -1).repeat(count, 1)

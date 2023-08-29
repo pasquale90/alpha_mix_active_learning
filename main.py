@@ -657,6 +657,9 @@ def al_train_sub_experiment(args, train_args, train_params, strategy_name, gener
 
         q_idxs, embeddings, preds, probs, u_idxs, candidate_idxs = strategy.query(budget)                   # gives the resulted queries
 
+        # import pdb
+        # pdb.set_trace()
+        
         duration = time.time() - start_time
 
         query_result = torch.zeros(Y_tr.size(), dtype=torch.bool)
@@ -842,7 +845,7 @@ if __name__ == "__main__":
     parser.add_argument('--alpha_cap', type=float, default=0.03125)
     parser.add_argument('--alpha_opt', action="store_const", default=False, const=True)
     # parser.add_argument('--alpha_closed_form_approx', action="store_const", default=False, const=True)        #    ---> UNCOMMENT ME - default=False  FOR LEARNING ALPHA
-    parser.add_argument('--alpha_closed_form_approx', action="store_const", default=True, const=True)
+    parser.add_argument('--alpha_closed_form_approx', action="store_const", default=False, const=True)
 
     # Gradient descent Alpha optimisation
     parser.add_argument('--alpha_learning_rate', type=float, default=0.1,

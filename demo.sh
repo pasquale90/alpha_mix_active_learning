@@ -1,16 +1,16 @@
 #!bin/bash
 
 datetime=`date "+%Y%m%d%H%M%S"`
-data_name="BIRDS"                                                               # DEFINE DATASET
+data_name="MNIST" #"BIRDS"                                                               # DEFINE DATASET
 data_dir="/home/melissap/Desktop/LAGO/3.githubs/mfork/alpha_mix_active_learning/your_data_directory/BirdsDataset" #"your_data_directory/${datetime}"
 output_dir="/home/melissap/Desktop/LAGO/3.githubs/mfork/alpha_mix_active_learning/output"
 log_directory="your_log_directory/${datetime}"
-n_init_lb=2625                                                                   # DEFINE #LABELED SAMPLES
+n_init_lb=100 #2625                                                                   # DEFINE #LABELED SAMPLES
 n_query=100                                                                     # DEFINE #QUERIED SAMPLES
-n_round=2                                                                      # DEFINE #ROUNDS
+n_round=10 #5                                                                      # DEFINE #ROUNDS
 learning_rate=0.001
-n_epoch=5                                                                     # DEFINE #EPOCHS PER ROUND
-model=vit_small
+n_epoch=100 #5                                                                     # DEFINE #EPOCHS PER ROUND
+model=mlp #vit_small
 strategy=AlphaMixSampling #EntropySampling #RandomSampling                                        # DEFINE QS
 alpha_opt
 
@@ -22,4 +22,6 @@ echo args
 source ~/miniconda3/etc/profile.d/conda.sh
 conda activate alphamix
 
+mkdir ${log_directory}
+# python main.py ${args} &> ${log_directory}/main.log
 python main.py ${args}
