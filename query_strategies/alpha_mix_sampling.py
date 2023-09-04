@@ -8,7 +8,7 @@ from .strategy import Strategy
 from sklearn.cluster import KMeans
 import torch
 import torch.nn.functional as F
-
+import query_strategies.research as research
 
 class AlphaMixSampling(Strategy):
 	def __init__(self, X, Y, idxs_lb, X_val, Y_val, model, args, device, writer):
@@ -130,25 +130,29 @@ class AlphaMixSampling(Strategy):
 
 			c_alpha = F.normalize(org_ulb_embedding[candidate].view(candidate.sum(), -1), p=2, dim=1).detach()
 # IN THIS PARTH OF THE CODE WE DO OUR RESEARCH
-			import pdb
-			pdb.set_trace()
+			# import pdb
+			# pdb.set_trace()
 			# selected_idxs = self.sample(min(n, candidate.sum().item()), feats=c_alpha)							# clustering
-			selected_idxs = self.sample_newMethod(min(n, candidate.sum().item()), feats=c_alpha)							# clustering
+			# selected_idxs = self.sample_newMethod(min(n, candidate.sum().item()), feats=c_alpha)							# clustering
+			selected_idxs = research.sample_newMethod1(min(n, candidate.sum().item()), feats=c_alpha)
+			lenQuery=len(selected_idxs)
+			# import pdb
+			# pdb.set_trace()
 			# selected_idxs = self.sample_DBSCAN(min(n, candidate.sum().item()), feats=c_alpha)							# clustering
 			u_selected_idxs = candidate.nonzero(as_tuple=True)[0][selected_idxs]
 			selected_idxs = idxs_unlabeled[candidate][selected_idxs]
 		else:
 			selected_idxs = np.array([], dtype=int)
 
-		if len(selected_idxs) < n:
-			remained = n - len(selected_idxs)
+		if len(selected_idxs) < lenQuery:
+			remained = lenQuery - len(selected_idxs)
 			idx_lb = copy.deepcopy(self.idxs_lb)
 			idx_lb[selected_idxs] = True
 			selected_idxs = np.concatenate([selected_idxs, np.random.choice(np.where(idx_lb == 0)[0], remained)])
 
 			print('picked %d samples from RandomSampling.' % (remained))
 
-		return np.array(selected_idxs), ulb_embedding, pred_1, ulb_probs, u_selected_idxs, idxs_unlabeled[candidate]
+		return lenQuery,np.array(selected_idxs), ulb_embedding, pred_1, ulb_probs, u_selected_idxs, idxs_unlabeled[candidate]
 	
 ############################################################################################################################### is find_alpha called anywhere?????????
 	def find_alpha(self):																							
@@ -292,117 +296,7 @@ class AlphaMixSampling(Strategy):
 		# import pdb
 		# pdb.set_trace()
 		return alpha
-
-	#cosine similarities
-	def sample_newMethod(self, n, feats):
-		'''
-		input:
-			n		: the number of samples requested
-			feats	: the candidate feature embeddings
-		
-		N clusters are made. 
-		The feature that is closer to the center of each cluster is selected.
-		
-		output:
-			n number of samples out of the candidates.
-		'''
-		
-		
-		from scipy import sparse
-
-		features=feats.numpy()
-
-		A_sparse = sparse.csr_matrix(features)
-
-		#similarity_matrix
-		def similarity_matrix():
-			from sklearn.metrics.pairwise import cosine_similarity
-
-			similarities = cosine_similarity(A_sparse)
-			print('pairwise dense output:\n {}\n'.format(similarities))
-
-			#also can output sparse matrices
-			similarities_sparse = cosine_similarity(A_sparse,dense_output=False)
-			print('pairwise sparse output:\n {}\n'.format(similarities_sparse))
-			
-			
-			# l2_nrm=torch.norm(features,dim=1,p=2)
-			# l2_v1=torch.norm(features,dim=1)
-			# l2_v2=torch.linalg.norm(features, dim=1, ord = 2)
-			# l2_v3=features.pow(2).sum(dim=1).sqrt()
-		
-#distance matrix
-# def distance_matrix():
-		from sklearn.metrics import pairwise_distances
-
-		distances=pairwise_distances(features,metric="euclidean") # metric="l2"
-		
-		# np.fill_diagonal(distances, None)
-
-		min_distance_from_sample=np.min(distances,axis=1,where=np.greater(distances,0.0),initial=distances[0,1])
-		# connected_nodes=np.argwhere(distances==min_distance_from_sample)
-		connected_nodes = [(i,np.where(distances[i]==min_distance_from_sample[i])[0][0]) for i in range(len(min_distance_from_sample))]
-
-			# distances2=pairwise_distances(features,metric="l2")
-			# distances_=pairwise_distances(A_sparse,metric="euclidean") # metric="l2"
-			# distances2_=pairwise_distances(A_sparse,metric="l2")
-# return distances
-# distances=distance_matrix()
-
-# Kmeans
-# def KMeans_centers():
-		cluster_learner = KMeans(n_clusters=self.args.n_label)
-		cluster_learner.fit(feats)
-
-		cluster_idxs = cluster_learner.predict(feats)
-		kmcenters=cluster_learner.cluster_centers_
-		dist_count=np.unique(cluster_idxs, return_counts=True)
-			# import pdb
-			# pdb.set_trace()
-		centers = cluster_learner.cluster_centers_[cluster_idxs]
-		dis__ = (feats - centers)
-		dis_ = (feats - centers) ** 2
-		dis = dis_.sum(axis=1)
-# return centers
-# centers=KMeans_centers()
-
-
-# def distance_from_centers():
-		from sklearn.metrics import pairwise_distances
-
-		distancesfcenters=pairwise_distances(features,kmcenters,metric="euclidean") # metric="l2"
-
-		min_distance_from_center=np.min(distancesfcenters,axis=1)
-		import pdb
-		pdb.set_trace()
-		# distances2=pairwise_distances(features,metric="l2")
-		# distances_=pairwise_distances(A_sparse,metric="euclidean") # metric="l2"
-		# distances2_=pairwise_distances(A_sparse,metric="l2")
-# return distancesfcenters
-# distance_from_centers()
-
-		import pdb
-		pdb.set_trace()
-
-		#'' HDBSCAN
-		from sklearn.cluster import DBSCAN
-
-		import hdbscan
-		from sklearn.datasets import make_blobs
-
-		
-		
-		clustering = DBSCAN(eps=0.4, min_samples=1).fit(features) # eps=0.5
-		labels=clustering.labels_
-		Nteams=len(np.unique(labels))
-		print(f"{Nteams} num teams")
-
-		clusterer = hdbscan.HDBSCAN(min_cluster_size=60, min_samples=1).fit(features)
-		hdbscan.HDBSCAN(min_cluster_size=5, gen_min_span_tree=True).fit(features)
-		import pdb
-		pdb.set_trace()
-		#''
-
+	
 	def sample_DBSCAN(self, n, feats):
 		'''
 		input:
