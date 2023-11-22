@@ -1,0 +1,17 @@
+ipdb==0.13.3
+matplotlib
+nltk==3.5
+numpy
+openml
+pandas
+scikit-learn
+scipy
+seaborn
+sklearn
+tensorboard
+torch
+torchattacks
+torchvision
+tqdm
+lancedb
+duckdb
