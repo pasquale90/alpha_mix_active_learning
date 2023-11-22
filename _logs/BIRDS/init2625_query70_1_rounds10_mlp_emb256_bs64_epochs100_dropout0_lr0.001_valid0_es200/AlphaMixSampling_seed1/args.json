@@ -1,0 +1,33 @@
+{
+  "data_name": "BIRDS",
+  "n_label": 10,
+  "data_dir": "/home/melissap/Desktop/LAGO/3.githubs/mfork/alpha_mix_active_learning/your_data_directory/BirdsDataset/",
+  "log_dir": "./logs",
+  "save_checkpoints": false,
+  "save_images": false,
+  "print_to_file": false,
+  "seeds": [
+    1,
+    10,
+    100,
+    1000,
+    10000
+  ],
+  "n_init_lb": 2625,
+  "init_lb_method": "general_random",
+  "n_query": 70,
+  "query_growth_ratio": 1,
+  "n_round": 10,
+  "strategy": "AlphaMixSampling",
+  "n_drop": 5,
+  "eps": 0.05,
+  "max_iter": 50,
+  "alpha_cap": 0.03125,
+  "alpha_opt": true,
+  "alpha_closed_form_approx": true,
+  "alpha_learning_rate": 0.1,
+  "alpha_clf_coef": 1.0,
+  "alpha_l2_coef": 0.01,
+  "alpha_learning_iters": 5,
+  "alpha_learn_batch_size": 1000000
+}

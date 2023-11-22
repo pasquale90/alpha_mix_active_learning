@@ -3,7 +3,7 @@
 ########################################################################################## Dependencies that are passed as parameters to the docker app - REQUIRED
 datetime=`date "+%Y%m%d%H%M%S"`
 data_name="BIRDS" #                                                                # DEFINE DATASET
-data_dir="/home/melissap/Desktop/LAGO/3.githubs/mfork/alpha_mix_active_learning/your_data_directory/BirdsDataset"
+data_dir="/home/melissap/_Datasets_/BirdsDataset"
 output_dir="/home/melissap/Desktop/LAGO/3.githubs/mfork/alpha_mix_active_learning/output"
 n_label=525                                                                                         # number of classes
 n_training_set=2625                                                                                 # DEFINE #LABELED SAMPLES

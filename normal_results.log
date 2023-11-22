@@ -1,0 +1,441 @@
+
+
+###################################################### INTERNAL GPU CHECK ######################################################
+
+
+is_available  True
+device_count  1
+current device  0
+cuda.device  <torch.cuda.device object at 0x7fa14f8894b0>
+device name  NVIDIA GeForce RTX 3090
+
+
+################################################################################################################################
+
+
+Namespace(data_name='MNIST', n_label=10, data_dir='/home/melissap/_Datasets_/BirdsDataset/', log_dir='your_log_directory/20231113155242', save_checkpoints=False, save_images=False, print_to_file=False, seeds=[1, 10, 100, 1000, 10000], n_init_lb=100, init_lb_method='general_random', n_query=100, query_growth_ratio=1, n_round=2, strategy='AlphaMixSampling', n_drop=5, eps=0.05, max_iter=50, alpha_cap=0.03125, alpha_opt=True, alpha_closed_form_approx=True, alpha_learning_rate=0.1, alpha_clf_coef=1.0, alpha_l2_coef=0.01, alpha_learning_iters=5, alpha_learn_batch_size=1000000)
+number of labeled pool: 100
+number of unlabeled pool: 59900
+number of validation pool: 0
+number of testing pool: 10000
+Using cuda device.
+MLPNet(
+  (lm1): Linear(in_features=784, out_features=256, bias=True)
+  (lm2): Linear(in_features=256, out_features=10, bias=True)
+)
+MNIST
+SEED 1
+AlphaMixSampling
+Adam optimizer...
+Training started...
+
+  0%|          | 0/5 [00:00<?, ?it/s]
+ 20%|██        | 1/5 [00:01<00:04,  1.14s/it]
+ 40%|████      | 2/5 [00:01<00:02,  1.26it/s]
+ 60%|██████    | 3/5 [00:02<00:01,  1.46it/s]
+ 80%|████████  | 4/5 [00:02<00:00,  1.60it/s]
+100%|██████████| 5/5 [00:03<00:00,  1.69it/s]
+100%|██████████| 5/5 [00:03<00:00,  1.51it/s]
+Round 0
+testing accuracy 0.6943
+Round 1
+query budget: 100
+/home/melissap/miniconda3/envs/customLearner2/lib/python3.10/site-packages/sklearn/cluster/_kmeans.py:1416: FutureWarning: The default value of `n_init` will change from 10 to 'auto' in 1.4. Set the value of `n_init` explicitly to suppress the warning
+  super()._check_params_vs_input(X, default_n_init=10)
+With alpha_cap set to 0.031250, number of inconsistencies: 929
+Number of inconsistencies: 929
+alpha_mean_mean: 1.000000
+alpha_std_mean: 0.000000
+alpha_mean_std 0.000000
+number of samples that are misclassified and selected: 60 (60.00%)
+Log Determinant of the Gram Matrix: 276.153656
+Signed Log Determinant of the Gram Matrix: 276.153656
+Confidence: 0.259119
+Margin: 0.002761
+Predicted Entropy: 2.140777
+GT Entropy: 2.222393
+Border Entropy: 3.026294
+training with 200 labeled samples.
+Adam optimizer...
+Training started...
+
+  0%|          | 0/5 [00:00<?, ?it/s]
+ 20%|██        | 1/5 [00:00<00:02,  1.78it/s]
+ 40%|████      | 2/5 [00:01<00:01,  1.74it/s]
+ 60%|██████    | 3/5 [00:01<00:01,  1.75it/s]
+ 80%|████████  | 4/5 [00:02<00:00,  1.75it/s]
+100%|██████████| 5/5 [00:02<00:00,  1.76it/s]
+100%|██████████| 5/5 [00:02<00:00,  1.76it/s]
+testing accuracy 0.794
+Round 2
+query budget: 100
+/home/melissap/miniconda3/envs/customLearner2/lib/python3.10/site-packages/sklearn/cluster/_kmeans.py:1416: FutureWarning: The default value of `n_init` will change from 10 to 'auto' in 1.4. Set the value of `n_init` explicitly to suppress the warning
+  super()._check_params_vs_input(X, default_n_init=10)
+With alpha_cap set to 0.031250, number of inconsistencies: 763
+Number of inconsistencies: 763
+alpha_mean_mean: 1.000000
+alpha_std_mean: 0.000000
+alpha_mean_std 0.000000
+number of samples that are misclassified and selected: 57 (57.00%)
+Log Determinant of the Gram Matrix: 301.676819
+Signed Log Determinant of the Gram Matrix: 301.676819
+Confidence: 0.330368
+Margin: 0.004604
+Predicted Entropy: 2.253465
+GT Entropy: 2.196442
+Border Entropy: 2.950351
+training with 300 labeled samples.
+Adam optimizer...
+Training started...
+
+  0%|          | 0/5 [00:00<?, ?it/s]
+ 20%|██        | 1/5 [00:00<00:02,  1.66it/s]
+ 40%|████      | 2/5 [00:01<00:01,  1.71it/s]
+ 60%|██████    | 3/5 [00:01<00:01,  1.72it/s]
+ 80%|████████  | 4/5 [00:02<00:00,  1.75it/s]
+100%|██████████| 5/5 [00:02<00:00,  1.75it/s]
+100%|██████████| 5/5 [00:02<00:00,  1.74it/s]
+testing accuracy 0.8586
+SEED 1
+AlphaMixSampling
+[0.6943 0.794  0.8586]
+number of labeled pool: 100
+number of unlabeled pool: 59900
+number of validation pool: 0
+number of testing pool: 10000
+Using cuda device.
+MLPNet(
+  (lm1): Linear(in_features=784, out_features=256, bias=True)
+  (lm2): Linear(in_features=256, out_features=10, bias=True)
+)
+MNIST
+SEED 10
+AlphaMixSampling
+Adam optimizer...
+Training started...
+
+  0%|          | 0/5 [00:00<?, ?it/s]
+ 20%|██        | 1/5 [00:00<00:02,  1.82it/s]
+ 40%|████      | 2/5 [00:01<00:01,  1.79it/s]
+ 60%|██████    | 3/5 [00:01<00:01,  1.81it/s]
+ 80%|████████  | 4/5 [00:02<00:00,  1.76it/s]
+100%|██████████| 5/5 [00:02<00:00,  1.75it/s]
+100%|██████████| 5/5 [00:02<00:00,  1.77it/s]
+Round 0
+testing accuracy 0.6971
+Round 1
+query budget: 100
+/home/melissap/miniconda3/envs/customLearner2/lib/python3.10/site-packages/sklearn/cluster/_kmeans.py:1416: FutureWarning: The default value of `n_init` will change from 10 to 'auto' in 1.4. Set the value of `n_init` explicitly to suppress the warning
+  super()._check_params_vs_input(X, default_n_init=10)
+With alpha_cap set to 0.031250, number of inconsistencies: 864
+Number of inconsistencies: 864
+alpha_mean_mean: 1.000000
+alpha_std_mean: 0.000000
+alpha_mean_std 0.000000
+number of samples that are misclassified and selected: 76 (76.00%)
+Log Determinant of the Gram Matrix: 281.908173
+Signed Log Determinant of the Gram Matrix: 281.908173
+Confidence: 0.267842
+Margin: 0.002934
+Predicted Entropy: 2.073020
+GT Entropy: 2.186432
+Border Entropy: 2.945072
+training with 200 labeled samples.
+Adam optimizer...
+Training started...
+
+  0%|          | 0/5 [00:00<?, ?it/s]
+ 20%|██        | 1/5 [00:00<00:02,  1.70it/s]
+ 40%|████      | 2/5 [00:01<00:01,  1.72it/s]
+ 60%|██████    | 3/5 [00:01<00:01,  1.73it/s]
+ 80%|████████  | 4/5 [00:02<00:00,  1.72it/s]
+100%|██████████| 5/5 [00:02<00:00,  1.72it/s]
+100%|██████████| 5/5 [00:02<00:00,  1.72it/s]
+testing accuracy 0.8219
+Round 2
+query budget: 100
+/home/melissap/miniconda3/envs/customLearner2/lib/python3.10/site-packages/sklearn/cluster/_kmeans.py:1416: FutureWarning: The default value of `n_init` will change from 10 to 'auto' in 1.4. Set the value of `n_init` explicitly to suppress the warning
+  super()._check_params_vs_input(X, default_n_init=10)
+With alpha_cap set to 0.031250, number of inconsistencies: 676
+Number of inconsistencies: 676
+alpha_mean_mean: 1.000000
+alpha_std_mean: 0.000000
+alpha_mean_std 0.000000
+number of samples that are misclassified and selected: 58 (58.00%)
+Log Determinant of the Gram Matrix: 298.161316
+Signed Log Determinant of the Gram Matrix: 298.161316
+Confidence: 0.330451
+Margin: 0.003964
+Predicted Entropy: 2.208628
+GT Entropy: 2.202860
+Border Entropy: 2.901156
+training with 300 labeled samples.
+Adam optimizer...
+Training started...
+
+  0%|          | 0/5 [00:00<?, ?it/s]
+ 20%|██        | 1/5 [00:00<00:02,  1.78it/s]
+ 40%|████      | 2/5 [00:01<00:01,  1.70it/s]
+ 60%|██████    | 3/5 [00:01<00:01,  1.72it/s]
+ 80%|████████  | 4/5 [00:02<00:00,  1.74it/s]
+100%|██████████| 5/5 [00:02<00:00,  1.74it/s]
+100%|██████████| 5/5 [00:02<00:00,  1.73it/s]
+testing accuracy 0.8555
+SEED 10
+AlphaMixSampling
+[0.6971 0.8219 0.8555]
+number of labeled pool: 100
+number of unlabeled pool: 59900
+number of validation pool: 0
+number of testing pool: 10000
+Using cuda device.
+MLPNet(
+  (lm1): Linear(in_features=784, out_features=256, bias=True)
+  (lm2): Linear(in_features=256, out_features=10, bias=True)
+)
+MNIST
+SEED 100
+AlphaMixSampling
+Adam optimizer...
+Training started...
+
+  0%|          | 0/5 [00:00<?, ?it/s]
+ 20%|██        | 1/5 [00:00<00:02,  1.81it/s]
+ 40%|████      | 2/5 [00:01<00:01,  1.80it/s]
+ 60%|██████    | 3/5 [00:01<00:01,  1.77it/s]
+ 80%|████████  | 4/5 [00:02<00:00,  1.78it/s]
+100%|██████████| 5/5 [00:02<00:00,  1.78it/s]
+100%|██████████| 5/5 [00:02<00:00,  1.78it/s]
+Round 0
+testing accuracy 0.6318
+Round 1
+query budget: 100
+/home/melissap/miniconda3/envs/customLearner2/lib/python3.10/site-packages/sklearn/cluster/_kmeans.py:1416: FutureWarning: The default value of `n_init` will change from 10 to 'auto' in 1.4. Set the value of `n_init` explicitly to suppress the warning
+  super()._check_params_vs_input(X, default_n_init=10)
+With alpha_cap set to 0.031250, number of inconsistencies: 753
+Number of inconsistencies: 753
+alpha_mean_mean: 1.000000
+alpha_std_mean: 0.000000
+alpha_mean_std 0.000000
+number of samples that are misclassified and selected: 69 (69.00%)
+Log Determinant of the Gram Matrix: 280.979095
+Signed Log Determinant of the Gram Matrix: 280.979095
+Confidence: 0.287655
+Margin: 0.003346
+Predicted Entropy: 2.042297
+GT Entropy: 2.213501
+Border Entropy: 2.871393
+training with 200 labeled samples.
+Adam optimizer...
+Training started...
+
+  0%|          | 0/5 [00:00<?, ?it/s]
+ 20%|██        | 1/5 [00:00<00:02,  1.79it/s]
+ 40%|████      | 2/5 [00:01<00:01,  1.70it/s]
+ 60%|██████    | 3/5 [00:01<00:01,  1.74it/s]
+ 80%|████████  | 4/5 [00:02<00:00,  1.74it/s]
+100%|██████████| 5/5 [00:02<00:00,  1.74it/s]
+100%|██████████| 5/5 [00:02<00:00,  1.74it/s]
+testing accuracy 0.8156
+Round 2
+query budget: 100
+/home/melissap/miniconda3/envs/customLearner2/lib/python3.10/site-packages/sklearn/cluster/_kmeans.py:1416: FutureWarning: The default value of `n_init` will change from 10 to 'auto' in 1.4. Set the value of `n_init` explicitly to suppress the warning
+  super()._check_params_vs_input(X, default_n_init=10)
+With alpha_cap set to 0.031250, number of inconsistencies: 684
+Number of inconsistencies: 684
+alpha_mean_mean: 1.000000
+alpha_std_mean: 0.000000
+alpha_mean_std 0.000000
+number of samples that are misclassified and selected: 67 (67.00%)
+Log Determinant of the Gram Matrix: 305.251984
+Signed Log Determinant of the Gram Matrix: 305.251984
+Confidence: 0.333252
+Margin: 0.004454
+Predicted Entropy: 2.202084
+GT Entropy: 2.233558
+Border Entropy: 3.182365
+training with 300 labeled samples.
+Adam optimizer...
+Training started...
+
+  0%|          | 0/5 [00:00<?, ?it/s]
+ 20%|██        | 1/5 [00:00<00:02,  1.69it/s]
+ 40%|████      | 2/5 [00:01<00:01,  1.73it/s]
+ 60%|██████    | 3/5 [00:01<00:01,  1.74it/s]
+ 80%|████████  | 4/5 [00:02<00:00,  1.72it/s]
+100%|██████████| 5/5 [00:02<00:00,  1.75it/s]
+100%|██████████| 5/5 [00:02<00:00,  1.74it/s]
+testing accuracy 0.8538
+SEED 100
+AlphaMixSampling
+[0.6318 0.8156 0.8538]
+number of labeled pool: 100
+number of unlabeled pool: 59900
+number of validation pool: 0
+number of testing pool: 10000
+Using cuda device.
+MLPNet(
+  (lm1): Linear(in_features=784, out_features=256, bias=True)
+  (lm2): Linear(in_features=256, out_features=10, bias=True)
+)
+MNIST
+SEED 1000
+AlphaMixSampling
+Adam optimizer...
+Training started...
+
+  0%|          | 0/5 [00:00<?, ?it/s]
+ 20%|██        | 1/5 [00:00<00:02,  1.82it/s]
+ 40%|████      | 2/5 [00:01<00:01,  1.79it/s]
+ 60%|██████    | 3/5 [00:01<00:01,  1.78it/s]
+ 80%|████████  | 4/5 [00:02<00:00,  1.77it/s]
+100%|██████████| 5/5 [00:02<00:00,  1.78it/s]
+100%|██████████| 5/5 [00:02<00:00,  1.78it/s]
+Round 0
+testing accuracy 0.7187
+Round 1
+query budget: 100
+/home/melissap/miniconda3/envs/customLearner2/lib/python3.10/site-packages/sklearn/cluster/_kmeans.py:1416: FutureWarning: The default value of `n_init` will change from 10 to 'auto' in 1.4. Set the value of `n_init` explicitly to suppress the warning
+  super()._check_params_vs_input(X, default_n_init=10)
+With alpha_cap set to 0.031250, number of inconsistencies: 729
+Number of inconsistencies: 729
+alpha_mean_mean: 1.000000
+alpha_std_mean: 0.000000
+alpha_mean_std 0.000000
+number of samples that are misclassified and selected: 64 (64.00%)
+Log Determinant of the Gram Matrix: 281.977936
+Signed Log Determinant of the Gram Matrix: 281.977936
+Confidence: 0.279631
+Margin: 0.002803
+Predicted Entropy: 2.163417
+GT Entropy: 2.187641
+Border Entropy: 3.113244
+training with 200 labeled samples.
+Adam optimizer...
+Training started...
+
+  0%|          | 0/5 [00:00<?, ?it/s]
+ 20%|██        | 1/5 [00:00<00:02,  1.79it/s]
+ 40%|████      | 2/5 [00:01<00:01,  1.77it/s]
+ 60%|██████    | 3/5 [00:01<00:01,  1.75it/s]
+ 80%|████████  | 4/5 [00:02<00:00,  1.75it/s]
+100%|██████████| 5/5 [00:02<00:00,  1.74it/s]
+100%|██████████| 5/5 [00:02<00:00,  1.75it/s]
+testing accuracy 0.8067
+Round 2
+query budget: 100
+/home/melissap/miniconda3/envs/customLearner2/lib/python3.10/site-packages/sklearn/cluster/_kmeans.py:1416: FutureWarning: The default value of `n_init` will change from 10 to 'auto' in 1.4. Set the value of `n_init` explicitly to suppress the warning
+  super()._check_params_vs_input(X, default_n_init=10)
+With alpha_cap set to 0.031250, number of inconsistencies: 642
+Number of inconsistencies: 642
+alpha_mean_mean: 1.000000
+alpha_std_mean: 0.000000
+alpha_mean_std 0.000000
+number of samples that are misclassified and selected: 65 (65.00%)
+Log Determinant of the Gram Matrix: 309.890198
+Signed Log Determinant of the Gram Matrix: 309.890198
+Confidence: 0.345517
+Margin: 0.004238
+Predicted Entropy: 2.229810
+GT Entropy: 2.222123
+Border Entropy: 2.967838
+training with 300 labeled samples.
+Adam optimizer...
+Training started...
+
+  0%|          | 0/5 [00:00<?, ?it/s]
+ 20%|██        | 1/5 [00:00<00:02,  1.73it/s]
+ 40%|████      | 2/5 [00:01<00:01,  1.72it/s]
+ 60%|██████    | 3/5 [00:01<00:01,  1.70it/s]
+ 80%|████████  | 4/5 [00:02<00:00,  1.71it/s]
+100%|██████████| 5/5 [00:02<00:00,  1.70it/s]
+100%|██████████| 5/5 [00:02<00:00,  1.71it/s]
+testing accuracy 0.8485
+SEED 1000
+AlphaMixSampling
+[0.7187 0.8067 0.8485]
+number of labeled pool: 100
+number of unlabeled pool: 59900
+number of validation pool: 0
+number of testing pool: 10000
+Using cuda device.
+MLPNet(
+  (lm1): Linear(in_features=784, out_features=256, bias=True)
+  (lm2): Linear(in_features=256, out_features=10, bias=True)
+)
+MNIST
+SEED 10000
+AlphaMixSampling
+Adam optimizer...
+Training started...
+
+  0%|          | 0/5 [00:00<?, ?it/s]
+ 20%|██        | 1/5 [00:00<00:02,  1.80it/s]
+ 40%|████      | 2/5 [00:01<00:01,  1.75it/s]
+ 60%|██████    | 3/5 [00:01<00:01,  1.79it/s]
+ 80%|████████  | 4/5 [00:02<00:00,  1.78it/s]
+100%|██████████| 5/5 [00:02<00:00,  1.77it/s]
+100%|██████████| 5/5 [00:02<00:00,  1.78it/s]
+Round 0
+testing accuracy 0.6992
+Round 1
+query budget: 100
+/home/melissap/miniconda3/envs/customLearner2/lib/python3.10/site-packages/sklearn/cluster/_kmeans.py:1416: FutureWarning: The default value of `n_init` will change from 10 to 'auto' in 1.4. Set the value of `n_init` explicitly to suppress the warning
+  super()._check_params_vs_input(X, default_n_init=10)
+With alpha_cap set to 0.031250, number of inconsistencies: 874
+Number of inconsistencies: 874
+alpha_mean_mean: 1.000000
+alpha_std_mean: 0.000000
+alpha_mean_std 0.000000
+number of samples that are misclassified and selected: 77 (77.00%)
+Log Determinant of the Gram Matrix: 280.630066
+Signed Log Determinant of the Gram Matrix: 280.630066
+Confidence: 0.270199
+Margin: 0.003077
+Predicted Entropy: 2.105260
+GT Entropy: 2.174449
+Border Entropy: 3.020812
+training with 200 labeled samples.
+Adam optimizer...
+Training started...
+
+  0%|          | 0/5 [00:00<?, ?it/s]
+ 20%|██        | 1/5 [00:00<00:02,  1.71it/s]
+ 40%|████      | 2/5 [00:01<00:01,  1.70it/s]
+ 60%|██████    | 3/5 [00:01<00:01,  1.74it/s]
+ 80%|████████  | 4/5 [00:02<00:00,  1.74it/s]
+100%|██████████| 5/5 [00:02<00:00,  1.76it/s]
+100%|██████████| 5/5 [00:02<00:00,  1.74it/s]
+testing accuracy 0.8043
+Round 2
+query budget: 100
+/home/melissap/miniconda3/envs/customLearner2/lib/python3.10/site-packages/sklearn/cluster/_kmeans.py:1416: FutureWarning: The default value of `n_init` will change from 10 to 'auto' in 1.4. Set the value of `n_init` explicitly to suppress the warning
+  super()._check_params_vs_input(X, default_n_init=10)
+With alpha_cap set to 0.031250, number of inconsistencies: 641
+Number of inconsistencies: 641
+alpha_mean_mean: 1.000000
+alpha_std_mean: 0.000000
+alpha_mean_std 0.000000
+number of samples that are misclassified and selected: 53 (53.00%)
+Log Determinant of the Gram Matrix: 310.028656
+Signed Log Determinant of the Gram Matrix: 310.028656
+Confidence: 0.328634
+Margin: 0.003997
+Predicted Entropy: 2.155241
+GT Entropy: 2.175777
+Border Entropy: 2.981590
+training with 300 labeled samples.
+Adam optimizer...
+Training started...
+
+  0%|          | 0/5 [00:00<?, ?it/s]
+ 20%|██        | 1/5 [00:00<00:02,  1.71it/s]
+ 40%|████      | 2/5 [00:01<00:01,  1.73it/s]
+ 60%|██████    | 3/5 [00:01<00:01,  1.74it/s]
+ 80%|████████  | 4/5 [00:02<00:00,  1.76it/s]
+100%|██████████| 5/5 [00:02<00:00,  1.77it/s]
+100%|██████████| 5/5 [00:02<00:00,  1.76it/s]
+testing accuracy 0.855
+SEED 10000
+AlphaMixSampling
+[0.6992 0.8043 0.855 ]

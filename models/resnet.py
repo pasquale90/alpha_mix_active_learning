@@ -1,3 +1,4 @@
+import torch
 import torch.nn as nn
 import torchvision.models as models
 from models.utils import build_mlp
@@ -79,4 +80,6 @@ class ResNetClassifier(nn.Module):
 
     def get_classifier(self):
         return self.classifier[-1]
-
+    
+    def get_model(self):
+        return torch.cat((self.resnet, self.classifier), dim=1)

@@ -9,8 +9,8 @@ from .training import Training
 
 
 class CDALModel(Training):
-    def __init__(self, net, net_args, handler, args, writer, device, init_model=True):
-        super(CDALModel, self).__init__(net, net_args, handler, args, writer, device, init_model)
+    def __init__(self, net, net_args, handler, args, writer, device, round, dataset, model, sampling, weights_dir):
+        super(CDALModel, self).__init__(net, net_args, handler, args, writer, device, round, dataset, model, sampling, weights_dir)
 
         self.hidden_dim = 1024
         self.max_epoch = 60

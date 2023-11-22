@@ -61,6 +61,7 @@ SUPPORTED_DATASETS=[
     'BIRDS'
 ]
 
+
 def supervised_learning(args):
     # supervised training args
     train_parser = argparse.ArgumentParser(description="Training parser for training hyper-parrameters at ech checkpoint.")
@@ -571,6 +572,9 @@ def al_train_sub_experiment(args, train_args, train_params, strategy_name, gener
     print('number of validation pool: {}'.format(len(Y_val)))
     print('number of testing pool: {}'.format(n_test))
 
+    import pdb
+    pdb.set_trace()
+    
     np.save(open(os.path.join(sub_path, 'query_0.np'), 'wb'), idxs_tmp[idxs_lb])
 
     # load network
@@ -700,6 +704,8 @@ def al_train_sub_experiment(args, train_args, train_params, strategy_name, gener
         # Store idxs in file 
         result_idxs=pd.DataFrame(torch.where(query_result==True)[0].numpy())
         resultspath=os.path.join(os.getcwd(),"output","results_round-"+str(rd)+".csv")
+        import pdb 
+        pdb.set_trace()
         result_idxs.to_csv(resultspath,index=False,header=False)
 
         resultspath=os.path.join(os.getcwd(),"output","results_round-"+str(rd)+".txt")

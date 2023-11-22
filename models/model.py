@@ -1,3 +1,4 @@
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
@@ -167,6 +168,7 @@ class MLPNet(nn.Module):
         self.return_embeddings = True
 
     def forward(self, x, embedding=False):
+
         #embedding = False
         if embedding:
             emb = x
@@ -188,3 +190,7 @@ class MLPNet(nn.Module):
 
     def get_classifier(self):
         return self.lm2
+
+    def get_model(self):
+        return torch.cat((self.lm1, self.lm2), dim=1)
+

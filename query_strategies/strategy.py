@@ -24,7 +24,7 @@ class Strategy:
         self.idxs_lb = idxs_lb
 
     def train(self, name):
-        self.model.train(name, self.X, self.Y, self.idxs_lb, self.X_val, self.Y_val)
+        return self.model.train(name, self.X, self.Y, self.idxs_lb, self.X_val, self.Y_val)
 
     def predict(self, X, Y):
         return self.model.predict(X, Y)
