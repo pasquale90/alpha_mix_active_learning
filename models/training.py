@@ -32,9 +32,10 @@ class Training(object):
         self.clf = self.net(**self.net_args).to(self.device)
         self.initial_state_dict = copy.deepcopy(self.clf.state_dict())
 
-            # print(self.clf)
-        # else:
-        #     self._load_weights(round, dataset, model, sampling)
+        try:
+            os.makedirs(self.weights_dir)
+        except:
+            pass
     
     def store_weights(self):
         
@@ -72,20 +73,24 @@ class Training(object):
         
         self.clf.eval()
 
-        # weights_filename = model + "_" + dataset + "_" + sampling + "_" + str(round) + "_weights.pth"
-        # weights_filepath = os.path.join(self.weights_dir, weights_filename)
-        weights_filename = self.model_name + "_" + self.dataset_name + "_" + self.sampling_name + "_" + str(self.currRound) + "_weights.pth"
-        weights_filepath = os.path.join(self.weights_dir, weights_filename)
+        if round>0:
+            # weights_filename = model + "_" + dataset + "_" + sampling + "_" + str(round) + "_weights.pth"
+            # weights_filepath = os.path.join(self.weights_dir, weights_filename)
+            weights_filename = self.model_name + "_" + self.dataset_name + "_" + self.sampling_name + "_" + str(self.currRound-1) + "_weights.pth"
+            weights_filepath = os.path.join(self.weights_dir, weights_filename)
 
-# import pdb
-# pdb.set_trace()
-        assert os.path.exists(weights_filepath)
+    # import pdb
+    # pdb.set_trace()
+            assert os.path.exists(weights_filepath)
+        
+            print(f"Loading weights {weights_filename}")
 
-        print(f"Loading weights {weights_filename}")
+            checkpoint = torch.load(weights_filepath)
+            # self.net.model.load_state_dict(checkpoint['model_state_dict'])
+            self.clf.load_state_dict(checkpoint['model_state_dict'])
+        elif round<0:
+            raise ValueError
 
-        checkpoint = torch.load(weights_filepath)
-        # self.net.model.load_state_dict(checkpoint['model_state_dict'])
-        self.clf.load_state_dict(checkpoint['model_state_dict'])
         self.args['continue_training']=True
         for params in self.clf.parameters():
             params.requires_grad = True

@@ -5,7 +5,9 @@ your_data_directory/*
 your_log_directory/*
 query_strategies/alpha_mix_sampling_DBSCAN.py
 _temp/
-logs/
+_logs
+_internaLogs
+_weights
 ./.gitignore
 ./.dockerignore
 clean_docker.sh

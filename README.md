@@ -11,9 +11,6 @@ bash demo-docker.sh
 nvidia-docker rmi --force $(docker images -q 'alphamix' | uniq)
 ```
 
-
-
-
 # EXTERNAL DATASET SUPPORT
   ## BIRDS DATASET
   - Download [Birds Dataset](https://www.kaggle.com/datasets/gpiosenka/100-bird-species?resource=download&select=birds.csv) by ```wget https://www.kaggle.com/datasets/gpiosenka/100-bird-species/download?datasetVersionNumber=65```

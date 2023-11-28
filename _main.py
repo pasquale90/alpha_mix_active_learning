@@ -30,7 +30,10 @@ from PIL import Image
 from pathlib import Path
 import lancedb
 
-sys.path.insert(0,"/home/melissap/Desktop/LAGO/3.githubs/integration/3.integration_Demo/pixano/ActiveLearning/certh_integration/231031_mnist/")
+# ------------------------------------------------------------------------------> fix latter - give the path of ALearner.py for importing functions from ALearner module
+print(os.path.dirname(os.path.realpath('__file__')))
+sys.path.insert(0,os.path.dirname(os.path.realpath('__file__'))) # one dir behind of the current's file parent dir
+
 from ALearner import (
     getLabels,
     getLabelledIds,
@@ -48,7 +51,6 @@ font = {'family' : 'serif',
         'size'   : font_size}
 
 matplotlib.rc('font', **font)
-
 
 ALL_STRATEGIES = [
     'RandomSampling',
@@ -78,7 +80,8 @@ SUPPORTED_DATASETS=[
 
 CWD = os.path.dirname(os.path.abspath(__file__))
 WEIGHTS_DIR= os.path.join(CWD,"_weights")
-
+log_directory=os.path.join(CWD,"_logs")
+internal_logdir = os.path.join(CWD,"_internaLogs")
 
 def supervised_learning(args):
 
@@ -136,7 +139,7 @@ def supervised_learning(args):
              'optimizer_args': {'lr': train_args.learning_rate},
              'lr_decay_epochs': train_args.lr_decay_epochs,
              'train_to_end': train_args.train_to_end,
-             'log_dir': os.path.join(CWD,'_logs/MNIST'),
+             'log_dir': os.path.join(log_directory,'MNIST'),
              'n_early_stopping': train_args.n_early_stopping,
              'continue_training': train_args.continue_training
              },
@@ -157,7 +160,7 @@ def supervised_learning(args):
              'optimizer_args': {'lr': train_args.learning_rate},
              'lr_decay_epochs': train_args.lr_decay_epochs,
              'train_to_end': train_args.train_to_end,
-             'log_dir': os.path.join(CWD,'_logs/EMNIST'),
+             'log_dir': os.path.join(log_directory,'EMNIST'),
              'n_early_stopping': train_args.n_early_stopping,
              'continue_training': train_args.continue_training
              },
@@ -187,7 +190,7 @@ def supervised_learning(args):
              'optimizer_args': {'lr': train_args.learning_rate},
              'lr_decay_epochs': train_args.lr_decay_epochs,
              'train_to_end': train_args.train_to_end,
-             'log_dir': os.path.join(CWD,'_logs/SVHN'),
+             'log_dir': os.path.join(log_directory,'SVHN'),
              'n_early_stopping': train_args.n_early_stopping,
              'continue_training': train_args.continue_training},
         'CIFAR10':
@@ -220,7 +223,7 @@ def supervised_learning(args):
              'optimizer_args': {'lr': train_args.learning_rate},
              'lr_decay_epochs': train_args.lr_decay_epochs,
              'train_to_end': train_args.train_to_end,
-             'log_dir': os.path.join(CWD,'_logs/CIFAR10'),
+             'log_dir': os.path.join(log_directory,'CIFAR10'),
              'n_early_stopping': train_args.n_early_stopping,
              'continue_training': train_args.continue_training},
         'CIFAR100':
@@ -250,7 +253,7 @@ def supervised_learning(args):
              'optimizer_args': {'lr': train_args.learning_rate},
              'lr_decay_epochs': train_args.lr_decay_epochs,
              'train_to_end': train_args.train_to_end,
-             'log_dir': os.path.join(CWD,'_logs/CIFAR100'),
+             'log_dir': os.path.join(log_directory,'CIFAR100'),
              'n_early_stopping': train_args.n_early_stopping,
              'continue_training': train_args.continue_training},
         'MiniImageNet':
@@ -282,7 +285,7 @@ def supervised_learning(args):
              'optimizer_args': {'lr': train_args.learning_rate},    #, 'weight_decay': 5e-4},
              'lr_decay_epochs': train_args.lr_decay_epochs,
              'train_to_end': train_args.train_to_end,
-             'log_dir': os.path.join(CWD,'_logs/MiniImageNet'),
+             'log_dir': os.path.join(log_directory,'MiniImageNet'),
              'n_early_stopping': train_args.n_early_stopping,
              'continue_training': train_args.continue_training},
         'domain_net-real':
@@ -315,7 +318,7 @@ def supervised_learning(args):
              'optimizer_args': {'lr': train_args.learning_rate},    #, 'weight_decay': 5e-4},
              'lr_decay_epochs': train_args.lr_decay_epochs,
              'train_to_end': train_args.train_to_end,
-             'log_dir': os.path.join(CWD,'_logs/domain_net-real'),
+             'log_dir': os.path.join(log_directory,'domain_net-real'),
              'n_early_stopping': train_args.n_early_stopping,
              'continue_training': train_args.continue_training},
         'mini_domain_net-real':
@@ -349,7 +352,7 @@ def supervised_learning(args):
              'optimizer_args': {'lr': train_args.learning_rate},    #, 'weight_decay': 5e-4},
              'lr_decay_epochs': train_args.lr_decay_epochs,
              'train_to_end': train_args.train_to_end,
-             'log_dir': os.path.join(CWD,'_logs/mini_domain_net-real'),
+             'log_dir': os.path.join(log_directory,'mini_domain_net-real'),
              'n_early_stopping': train_args.n_early_stopping,
              'continue_training': train_args.continue_training},
         'tiny_domain_net-real':
@@ -383,7 +386,7 @@ def supervised_learning(args):
              'optimizer_args': {'lr': train_args.learning_rate},    #, 'weight_decay': 5e-4},
              'lr_decay_epochs': train_args.lr_decay_epochs,
              'train_to_end': train_args.train_to_end,
-             'log_dir': os.path.join(CWD,'_logs/mini_domain_net-real'),
+             'log_dir': os.path.join(log_directory,'mini_domain_net-real'),
              'n_early_stopping': train_args.n_early_stopping,
              'continue_training': train_args.continue_training},
         'openml':
@@ -430,7 +433,7 @@ def supervised_learning(args):
              'optimizer_args': {'lr': train_args.learning_rate},    #, 'weight_decay': 5e-4},
              'lr_decay_epochs': train_args.lr_decay_epochs,
              'train_to_end': train_args.train_to_end,
-             'log_dir': os.path.join(CWD,'_logs/mini_domain_net-real'),
+             'log_dir': os.path.join(log_directory,'birds'),
              'n_early_stopping': train_args.n_early_stopping,
              'continue_training': train_args.continue_training}
     }
@@ -467,8 +470,6 @@ def al_train(args, train_args, train_params, strategy_name):
     if not os.path.exists(main_path):
         os.makedirs(main_path)
 
-    print (args)
-
     general_path = os.path.join(main_path,
                                 '_query' + str(args.n_query) + '_' + str(args.query_growth_ratio) +
                                 '_' + train_args.model + '_emb' + str(train_args.emb_size) +
@@ -494,7 +495,7 @@ def al_train(args, train_args, train_params, strategy_name):
 
 def set_seeds(seed):
     # set seed
-    #random.seed(seed)
+    random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
     torch.backends.cudnn.enabled = False
@@ -507,23 +508,28 @@ def save_args(args, path, name):
 
 def al_train_sub_experiment(args, train_args, train_params, strategy_name, general_path, seed):
 
-    exp_name = strategy_name + '_seed' + str(seed)
-    sub_path = os.path.join(general_path, exp_name)
-    if not os.path.exists(sub_path):
-        os.makedirs(sub_path)
+    print(f"\n\n######################################################## AL ROUND {str(args.round)} mode {str(args.mode)} : START #########################################################\n\n")
+    print (args)
 
-    save_args(args, sub_path, 'args')
-    save_args(train_args, sub_path, 'train_args')
+    round = int(args.round)
 
-    if args.print_to_file:
-        orig_stdout = sys.stdout
-        log_file = open(os.path.join(sub_path, 'logs.txt'), 'w')
-        sys.stdout = log_file
+    # exp_name = strategy_name + '_seed' + str(seed)
+    # sub_path = os.path.join(general_path, exp_name)
+    # if not os.path.exists(sub_path):
+    #     os.makedirs(sub_path)
 
-    writer = SummaryWriter(log_dir=sub_path)
+    # save_args(args, sub_path, 'args')
+    # save_args(train_args, sub_path, 'train_args')
 
-    result_file = open(sub_path + '.csv', 'w')
-    result_writer = csv.writer(result_file, quoting=csv.QUOTE_ALL)
+    # if args.print_to_file:
+    #     orig_stdout = sys.stdout
+    #     log_file = open(os.path.join(sub_path, 'logs.txt'), 'w')
+    #     sys.stdout = log_file
+
+    writer = SummaryWriter(log_dir=internal_logdir)
+
+    # result_file = open(sub_path + '.csv', 'w')
+    # result_writer = csv.writer(result_file, quoting=csv.QUOTE_ALL)
 
     # set seed
     set_seeds(seed)
@@ -535,17 +541,14 @@ def al_train_sub_experiment(args, train_args, train_params, strategy_name, gener
     # import_dir =os.path.join(str(args.data_dir) , str(args.data_name))
 
     database = lancedb.connect(Path(str(args.data_dir)))
-    round = getLastRound(database)
+    # round = getLastRound(database)
+
+    # sys.exit()
+
     tr_X,tr_Y,tr_lb_X, tr_lb_Y, te_X, te_Y = getDataset(database)
 
 # import pdb
 # pdb.set_trace()
-    
-    if round==-1:
-        query_results = [os.path.basename(sample) for sample in random.sample(tr_X, int(args.n_query))]
-        queries = pd.DataFrame(query_results, columns=["query_results"])
-        queries.to_csv(str(args.query_out))
-        sys.exit()
 
     # post process
     idxs_lb = np.zeros(len(tr_X), dtype=bool)
@@ -561,7 +564,8 @@ def al_train_sub_experiment(args, train_args, train_params, strategy_name, gener
     transform = transforms.Compose([ 
         transforms.PILToTensor() 
     ]) 
-    
+
+    print("Loading data ...")
     X_tr = torch.stack([transform(Image.open(x)) for x in tr_X]).squeeze(1)
     Y_tr = torch.tensor([int(y) if y else -1 for y in tr_Y], dtype=torch.int64)
     X_te = torch.stack([transform(Image.open(x)) for x in te_X]).squeeze(1)
@@ -572,6 +576,8 @@ def al_train_sub_experiment(args, train_args, train_params, strategy_name, gener
     print('number of validation pool: {}'.format(len(Y_val)))
     print('number of testing pool: {}'.format(n_test))
 
+    print("Data loaded ...")
+
     if is_openml(args.data_name):
         train_params['n_label'] = int(max(Y_tr) + 1)
         train_params['emb_size'] = train_args.emb_size  #1024
@@ -581,7 +587,7 @@ def al_train_sub_experiment(args, train_args, train_params, strategy_name, gener
         train_params['dim'] = np.shape(X_tr)[1:]
     args.n_label = train_params['n_label']
 
-    np.save(open(os.path.join(sub_path, 'query_0.np'), 'wb'), idxs_tmp[idxs_lb])
+    # np.save(open(os.path.join(sub_path, 'query_0.np'), 'wb'), idxs_tmp[idxs_lb])
 
     # load network
     if train_args.model == 'baseline_cnn':
@@ -658,10 +664,10 @@ def al_train_sub_experiment(args, train_args, train_params, strategy_name, gener
         acc = np.zeros(round + 1)
         acc[0] = 1.0 * (Y_te == P).sum().item() / len(Y_te)
         print('Round 0\ntesting accuracy {}'.format(acc[0]))
-        writer.add_scalar('test_accuracy', acc[0], 0)
+        # writer.add_scalar('test_accuracy', acc[0], 0)
 
-        result_writer.writerow([acc[0], 0.])
-        result_file.flush()
+        # result_writer.writerow([acc[0], 0.])
+        # result_file.flush()
 
 # import pdb
 # pdb.set_trace()
@@ -676,7 +682,13 @@ def al_train_sub_experiment(args, train_args, train_params, strategy_name, gener
         accuracy.to_csv(str(args.train_out))
 
     elif (str(args.mode) == "query"):
-
+        
+        if round==0:
+            query_results = [os.path.basename(sample) for sample in random.sample(tr_X, int(args.n_query))]
+            queries = pd.DataFrame(query_results, columns=["query_results"])
+            queries.to_csv(str(args.query_out))
+            sys.exit()
+            
         model.load_weights(round, dataset=str(args.data_name),model= str(train_args.model), sampling=str(args.strategy))                     # Load previous state
         cls = globals()[strategy_name]
         strategy = cls(X_tr, Y_tr, idxs_lb, X_val, Y_val, model, args, device, writer)                          # initializes qs
@@ -707,12 +719,12 @@ def al_train_sub_experiment(args, train_args, train_params, strategy_name, gener
 
             get_query_diversity_uncertainty(s_embddings, s_gt_y, s_y, s_probs, writer, round)
 
-        if args.save_images:
-            all_embeds = np.zeros((Y_tr.size()[0], embeddings.size(1)), dtype=float)
-            all_embeds[~idxs_lb] = embeddings
+        # if args.save_images:
+        #     all_embeds = np.zeros((Y_tr.size()[0], embeddings.size(1)), dtype=float)
+        #     all_embeds[~idxs_lb] = embeddings
 
-            visualise_results(all_embeds, q_idxs if candidate_idxs is None else candidate_idxs, Y_tr, q_idxs,
-                              os.path.join(sub_path, 'embedding_round_%d.ckp' % (round)))
+        #     visualise_results(all_embeds, q_idxs if candidate_idxs is None else candidate_idxs, Y_tr, q_idxs,
+        #                       os.path.join(sub_path, 'embedding_round_%d.ckp' % (round)))
 
 
         # model.store_weights( round = rd ,dataset=str(args.data_name),model=train_args.model, sampling=str(args.strategy))
@@ -722,6 +734,8 @@ def al_train_sub_experiment(args, train_args, train_params, strategy_name, gener
 
         # tr_X[q_idxs]
 
+        # import pdb
+        # pdb.set_trace()
         query_results = [os.path.basename(tr_X[idx]) for idx in q_idxs]
         queries = pd.DataFrame(query_results, columns=["query_results"])
         queries.to_csv(str(args.query_out))
@@ -808,11 +822,14 @@ def al_train_sub_experiment(args, train_args, train_params, strategy_name, gener
 #         # store 
 
     writer.close()
-    result_file.close()
+    # result_file.close()
 
-    if args.print_to_file:
-        sys.stdout = orig_stdout
-        log_file.close()
+    # if args.print_to_file:
+    #     sys.stdout = orig_stdout
+    #     log_file.close()
+
+    print(f"\n\n######################################################### AL ROUND {round} mode {str(args.mode)} : END ##########################################################\n\n")
+
 
 
 def get_query_diversity_uncertainty(embeddings, gt_y, p_y, probs, writer, rd):
@@ -866,7 +883,7 @@ def get_query_diversity_uncertainty(embeddings, gt_y, p_y, probs, writer, rd):
     print('Border Entropy: %f' % ent)
     writer.add_scalar('selection_statistics/border_entropy', ent, rd)
 
-
+"""
 def visualise_results(all_embeddings, can_idxs, Y_tr, q_idxs, path):
     #embeddings = torch.cat([all_embeddings[idxs_lb], all_embeddings[q_idxs]], dim=1)
     if all_embeddings.shape[-1] == 2:
@@ -895,7 +912,7 @@ def visualise_results(all_embeddings, can_idxs, Y_tr, q_idxs, path):
                    label=str(label), alpha=1., edgecolors='none', c=c, marker='o', s=120)
     ax.grid(False)
     plt.savefig(path, bbox_inches='tight')
-
+"""
 
 if __name__ == "__main__":
 
@@ -903,44 +920,44 @@ if __name__ == "__main__":
 
     # parser.add_argument('--root_dir', type=str, required=True, help="The absolute dir where the ")
     # parser.add_argument('--data_name', type=str, choices=SUPPORTED_DATASETS)
+    
     parser.add_argument('--mode', type=str, choices=["train","query"])
     parser.add_argument('--data_name', type=str)
     parser.add_argument('--n_label', type=int, default=10, help='The number of distinct classes in the dataset.')
+    parser.add_argument('--n_init_lb', type=int, default=10, help='The number of training samples to query in the first round')
+    parser.add_argument('--n_query', type=int, default=100)
 
     parser.add_argument('--data_dir', type=str)
-    parser.add_argument('--train_out', type=str, default=None, help = "path to the file")
-    parser.add_argument('--query_out', type=str, default="path to the file")
     
-    parser.add_argument('--log_dir', type=str, default='_logs')
-    parser.add_argument('--save_checkpoints', action='store_const', default=False, const=True)
-
-    parser.add_argument('--save_images', action="store_const", default=False, const=True)
-    parser.add_argument('--print_to_file', action="store_const", default=False, const=True)
-
-    parser.add_argument('--seeds', type=int, nargs='+', default=[1, 10, 100, 1000, 10000])
-    parser.add_argument('--init_lb_method', type=str, default='general_random',
-                        choices=['general_random', 'per_class_random'])
-    parser.add_argument('--n_query', type=int, default=100)
-    parser.add_argument('--query_growth_ratio', type=int, default=1)
-
-
     parser.add_argument('--strategy', type=str,
                         choices=['RandomSampling', 'EntropySampling',
                                  'BALDDropout', 'CoreSet',
                                  'AdversarialDeepFool',
                                  'BadgeSampling', 'CDALSampling', 'GCNSampling', 'AlphaMixSampling',
                                  'All'])
+    parser.add_argument('--round', type=int, help="the current AL round")
 
+    parser.add_argument('--train_out', type=str, default=None, help = "path to the file")
+    parser.add_argument('--query_out', type=str, default="path to the file")
+
+    parser.add_argument('--seeds', type=int, nargs='+', default=[1, 10, 100, 1000, 10000])
+    parser.add_argument('--init_lb_method', type=str, default='general_random',
+                        choices=['general_random', 'per_class_random'])
+
+    parser.add_argument('--log_dir', type=str, default=log_directory)
+    parser.add_argument('--save_checkpoints', action='store_const', default=False, const=True)
+    parser.add_argument('--save_images', action="store_const", default=False, const=True)
+    parser.add_argument('--print_to_file', action="store_const", default=False, const=True)
+    
+    parser.add_argument('--query_growth_ratio', type=int, default=1)
     parser.add_argument('--n_drop', type=int, default=5)
     parser.add_argument('--eps', type=float, default=0.05)
     parser.add_argument('--max_iter', type=int, default=50)
-
     # AlphaMix hyper-parameters
     parser.add_argument('--alpha_cap', type=float, default=0.03125)
     parser.add_argument('--alpha_opt', action="store_const", default=False, const=True)
     # parser.add_argument('--alpha_closed_form_approx', action="store_const", default=False, const=True)        #    ---> UNCOMMENT ME - default=False  FOR LEARNING ALPHA
     parser.add_argument('--alpha_closed_form_approx', action="store_const", default=True, const=True)
-
     # Gradient descent Alpha optimisation
     parser.add_argument('--alpha_learning_rate', type=float, default=0.1,
                         help='The learning rate of finding the optimised alpha')
@@ -952,12 +969,12 @@ if __name__ == "__main__":
 
     args, _ = parser.parse_known_args()
 
-    print("\n\n###################################################### INTERNAL GPU CHECK ######################################################\n\n")
-    print("is_available ",torch.cuda.is_available())
-    print("device_count ",torch.cuda.device_count())
-    print("current device ",torch.cuda.current_device())
-    print("cuda.device ",torch.cuda.device(0))
-    print("device name ", torch.cuda.get_device_name(0))
-    print("\n\n################################################################################################################################\n\n")
+    # print("\n\n###################################################### INTERNAL GPU CHECK ######################################################\n\n")
+    # print("is_available ",torch.cuda.is_available())
+    # print("device_count ",torch.cuda.device_count())
+    # print("current device ",torch.cuda.current_device())
+    # print("cuda.device ",torch.cuda.device(0))
+    # print("device name ", torch.cuda.get_device_name(0))
+    # print("\n\n################################################################################################################################\n\n")
 
     supervised_learning(args)

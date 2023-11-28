@@ -1,6 +1,6 @@
-ipdb==0.13.3
+ipdb
 matplotlib
-nltk==3.5
+nltk
 numpy
 openml
 pandas
@@ -13,6 +13,4 @@ torch
 torchattacks
 torchvision
 tqdm
-lancedb
-duckdb
 pixano
