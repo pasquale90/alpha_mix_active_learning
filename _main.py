@@ -7,6 +7,7 @@ import math
 import random
 import numpy as np
 import pandas as pd
+import cv2
 from dataset import get_dataset, get_handler, is_openml
 from custom_dataset import create_train_params_pool
 from models.model import get_net, MLPNet
@@ -29,22 +30,6 @@ import matplotlib.colors as mcolors
 from PIL import Image
 from pathlib import Path
 import lancedb
-
-# ------------------------------------------------------------------------------> fix latter - give the path of ALearner.py for importing functions from ALearner module
-print(os.path.dirname(os.path.realpath('__file__')))
-sys.path.insert(0,os.path.dirname(os.path.realpath('__file__'))) # one dir behind of the current's file parent dir
-
-from ALearner import (
-    getLabels,
-    getLabelledIds,
-    getUnlabelledIds,
-    getTaggedIds,
-    getLastRound,
-    ddb_str,
-    custom_update,
-    getDataset
-)
-
 
 font_size = 25
 font = {'family' : 'serif',
@@ -123,7 +108,7 @@ def supervised_learning(args):
         'MNIST':
             {'n_epoch': train_args.n_epoch,
              'n_training_set': 60000,
-             'n_label': 10,
+             'n_label': None,
              'image_size': 28,
              'in_channels': 1,
              'transform': transforms.Compose(
@@ -143,6 +128,39 @@ def supervised_learning(args):
              'n_early_stopping': train_args.n_early_stopping,
              'continue_training': train_args.continue_training
              },
+        'CIFAR11':
+            {'n_epoch': train_args.n_epoch,
+             'n_label': None,
+             'n_training_set': 66000,
+             'image_size': 32,
+             'in_channels': 3,
+             'transform': transforms.Compose(
+                 [
+                     transforms.RandomCrop(32, padding=4),
+                     transforms.RandomHorizontalFlip(),
+                     transforms.ToTensor(),
+                     transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+                 ] if train_args.data_augmentation else
+                 [
+                     transforms.ToTensor(),
+                     transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+                 ]
+             ),
+             'test_transform': transforms.Compose(
+                 [
+                     transforms.ToTensor(),
+                     transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+                 ]
+             ),
+             'loader_tr_args': {'batch_size': train_args.batch_size, 'num_workers': 10},
+             'loader_te_args': {'batch_size': train_args.batch_size, 'num_workers': 10},
+             # 'optimizer_args': {'lr': 0.05, 'momentum': 0.9},
+             'optimizer_args': {'lr': train_args.learning_rate},
+             'lr_decay_epochs': train_args.lr_decay_epochs,
+             'train_to_end': train_args.train_to_end,
+             'log_dir': os.path.join(log_directory,'CIFAR11'),
+             'n_early_stopping': train_args.n_early_stopping,
+             'continue_training': train_args.continue_training},
         'EMNIST':
             {'n_epoch': train_args.n_epoch,
              'n_training_set': 130000,
@@ -440,15 +458,13 @@ def supervised_learning(args):
 
     if is_openml(args.data_name):
         train_params = train_params_pool['openml']
-    else:
-        # if args.data_name not in SUPPORTED_DATASETS:
-            
-        #     train_params = create_train_params_pool(train_args)
-        # else:
-            # train_params = train_params_pool[args.data_name]
-        train_params = train_params_pool["MNIST"]
-            
-
+    # else:
+#REQUIRES FIX - FIX THE TRAINPARAMS
+    elif "mnist" in str(args.data_name).lower():
+        train_params = train_params_pool["MNIST"] # for now, train_params_pool["MNIST"]["n_label"] is set to None
+    elif "cifar" in str(args.data_name).lower():
+        train_params = train_params_pool["CIFAR11"] # for now, train_params_pool["MNIST"]["n_label"] is set to None
+        
     train_params['optimizer'] = train_args.optimizer
     if train_args.optimizer == 'SGD':
         train_params['optimizer_args']['momentum'] = train_args.momentum
@@ -466,6 +482,7 @@ def supervised_learning(args):
 
 
 def al_train(args, train_args, train_params, strategy_name):
+
     main_path = os.path.join(args.log_dir, args.data_name)
     if not os.path.exists(main_path):
         os.makedirs(main_path)
@@ -511,6 +528,14 @@ def al_train_sub_experiment(args, train_args, train_params, strategy_name, gener
     print(f"\n\n######################################################## AL ROUND {str(args.round)} mode {str(args.mode)} : START #########################################################\n\n")
     print (args)
 
+    # import ALearner
+    print("args.pixano_al_module ",args.pixano_al_module)
+    sys.path.insert(0,args.pixano_al_module)
+    # /home/melissap/Desktop/LAGO_43integrationDemo/pixano
+    # import pdb
+    # pdb.set_trace()
+    from ALearner import getDataset
+
     round = int(args.round)
 
     # exp_name = strategy_name + '_seed' + str(seed)
@@ -545,10 +570,16 @@ def al_train_sub_experiment(args, train_args, train_params, strategy_name, gener
 
     # sys.exit()
 
-    tr_X,tr_Y,tr_lb_X, tr_lb_Y, te_X, te_Y = getDataset(database)
+    # import pdb
+    # pdb.set_trace()
 
-# import pdb
-# pdb.set_trace()
+    tr_X,tr_Y,tr_lb_X, tr_lb_Y, te_X, te_Y, num_classes = getDataset(database)
+
+    if train_params['n_label']==None:
+        train_params['n_label'] = num_classes
+
+    # import pdb
+    # pdb.set_trace()
 
     # post process
     idxs_lb = np.zeros(len(tr_X), dtype=bool)
@@ -562,19 +593,46 @@ def al_train_sub_experiment(args, train_args, train_params, strategy_name, gener
     idxs_tmp = np.arange(n_pool)
     
     transform = transforms.Compose([ 
-        transforms.PILToTensor() 
+        transforms.PILToTensor(),
+        # transforms.ToTensor(),
+        # transforms.Normalize((0.1307,), (0.3081,))
     ]) 
+# # transform = transforms.Compose([ transforms.PILToTensor() ] 
+#     import pdb
+#     pdb.set_trace()
 
     print("Loading data ...")
-    X_tr = torch.stack([transform(Image.open(x)) for x in tr_X]).squeeze(1)
-    Y_tr = torch.tensor([int(y) if y else -1 for y in tr_Y], dtype=torch.int64)
-    X_te = torch.stack([transform(Image.open(x)) for x in te_X]).squeeze(1)
-    Y_te = torch.tensor([int(y) for y in te_Y], dtype=torch.int64)
+    # X_tr = torch.stack([transform(Image.open(x).convert('L')) for x in tr_X]).squeeze(1)
+    # Y_tr = torch.tensor([int(y) if y else -1 for y in tr_Y ], dtype=torch.int64)
+    # X_te = torch.stack([transform(Image.open(x).convert('L')) for x in te_X]).squeeze(1)
+    # Y_te = torch.tensor([int(y) for y in te_Y], dtype=torch.int64)
+# REQUIRES A FIX
+    if "mnist" in str(args.data_name).lower():
+        X_tr = torch.stack([transform(Image.open(x)) for x in tr_X]).squeeze(1)
+        Y_tr = torch.tensor([int(y) if y else -1 for y in tr_Y ], dtype=torch.int64)
+        X_te = torch.stack([transform(Image.open(x)) for x in te_X]).squeeze(1)
+        Y_te = torch.tensor([int(y) for y in te_Y], dtype=torch.int64)
+    elif "cifar" in str(args.data_name).lower():
+        # import pdb
+        # pdb.set_trace()
+        X_tr = np.array([cv2.cvtColor(cv2.imread(x),cv2.COLOR_BGR2RGB) for x in tr_X],dtype=np.uint8)
+        Y_tr = torch.tensor([int(y) if y else -1 for y in tr_Y ], dtype=torch.int64)
+        X_te = np.array([cv2.cvtColor(cv2.imread(x),cv2.COLOR_BGR2RGB) for x in te_X],dtype=np.uint8)
+        Y_te = torch.tensor([int(y) for y in te_Y], dtype=torch.int64)
+
+        # X_tr = torch.stack([transform(Image.open(x)).permute(1, 2, 0) for x in tr_X]).squeeze(1)
+        # Y_tr = torch.tensor([int(y) if y else -1 for y in tr_Y ], dtype=torch.int64)
+        # X_te = torch.stack([transform(Image.open(x)).permute(1, 2, 0) for x in te_X]).squeeze(1)
+        # Y_te = torch.tensor([int(y) for y in te_Y], dtype=torch.int64)
 
     print('number of labeled pool: {}'.format(idxs_lb.sum()))
     print('number of unlabeled pool: {}'.format(n_pool - idxs_lb.sum()))
     print('number of validation pool: {}'.format(len(Y_val)))
     print('number of testing pool: {}'.format(n_test))
+
+    # for cifar
+    # (Pdb) X_tr.shape
+    # (50000, 32, 32, 3)
 
     print("Data loaded ...")
 
@@ -585,7 +643,7 @@ def al_train_sub_experiment(args, train_args, train_params, strategy_name, gener
     else:
         train_params['emb_size'] = train_args.emb_size  #256
         train_params['dim'] = np.shape(X_tr)[1:]
-    args.n_label = train_params['n_label']
+    args.n_label = train_params['n_label'] 
 
     # np.save(open(os.path.join(sub_path, 'query_0.np'), 'wb'), idxs_tmp[idxs_lb])
 
@@ -634,8 +692,13 @@ def al_train_sub_experiment(args, train_args, train_params, strategy_name, gener
                     'n_last_blocks': train_args.vit_n_last_blocks,
                     'avgpool_patchtokens': train_args.vit_avgpool_patchtokens,
                     'pretrained_weights': train_args.vit_pretrained_weights}
+    
+# REQUIRES A FIX
     # handler = get_handler(args.data_name)
-    handler = get_handler("MNIST") # requires a generalized fix
+    if "mnist" in str(args.data_name).lower():
+        handler = get_handler("MNIST") # requires a generalized fix
+    elif "cifar" in str(args.data_name).lower():
+        handler = get_handler("CIFAR10") # requires a generalized fix
 
     use_cuda = torch.cuda.is_available()
     print('Using %s device.' % ("cuda" if use_cuda else "cpu"))
@@ -923,12 +986,13 @@ if __name__ == "__main__":
     
     parser.add_argument('--mode', type=str, choices=["train","query"])
     parser.add_argument('--data_name', type=str)
-    parser.add_argument('--n_label', type=int, default=10, help='The number of distinct classes in the dataset.')
+    parser.add_argument('--n_label', default=None, help='The number of distinct classes in the dataset.')
     parser.add_argument('--n_init_lb', type=int, default=10, help='The number of training samples to query in the first round')
     parser.add_argument('--n_query', type=int, default=100)
 
     parser.add_argument('--data_dir', type=str)
-    
+    parser.add_argument('--pixano_al_module', type=str, help="Module dir where Active Learning module is based") #default="ActiveLearning",
+   
     parser.add_argument('--strategy', type=str,
                         choices=['RandomSampling', 'EntropySampling',
                                  'BALDDropout', 'CoreSet',
