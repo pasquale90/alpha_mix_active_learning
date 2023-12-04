@@ -528,13 +528,15 @@ def al_train_sub_experiment(args, train_args, train_params, strategy_name, gener
     print(f"\n\n######################################################## AL ROUND {str(args.round)} mode {str(args.mode)} : START #########################################################\n\n")
     print (args)
 
+    # import pdb
+    # pdb.set_trace()
     # import ALearner
-    print("args.pixano_al_module ",args.pixano_al_module)
-    sys.path.insert(0,args.pixano_al_module)
+    print("args.pixano_root ",args.pixano_root)
+    sys.path.insert(0,args.pixano_root)
     # /home/melissap/Desktop/LAGO_43integrationDemo/pixano
     # import pdb
     # pdb.set_trace()
-    from ALearner import getDataset
+    from ActiveLearning.ALearner import getDataset
 
     round = int(args.round)
 
@@ -991,7 +993,7 @@ if __name__ == "__main__":
     parser.add_argument('--n_query', type=int, default=100)
 
     parser.add_argument('--data_dir', type=str)
-    parser.add_argument('--pixano_al_module', type=str, help="Module dir where Active Learning module is based") #default="ActiveLearning",
+    parser.add_argument('--pixano_root', type=str, help="Module dir where Active Learning module is based") #default="ActiveLearning",
    
     parser.add_argument('--strategy', type=str,
                         choices=['RandomSampling', 'EntropySampling',
