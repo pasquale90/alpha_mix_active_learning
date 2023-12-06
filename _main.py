@@ -528,67 +528,30 @@ def al_train_sub_experiment(args, train_args, train_params, strategy_name, gener
     print(f"\n\n######################################################## AL ROUND {str(args.round)} mode {str(args.mode)} : START #########################################################\n\n")
     print (args)
 
-    # import pdb
-    # pdb.set_trace()
     # import ALearner
     print("args.pixano_root ",args.pixano_root)
     sys.path.insert(0,args.pixano_root)
-    # /home/melissap/Desktop/LAGO_43integrationDemo/pixano
-    # import pdb
-    # pdb.set_trace()
     from ActiveLearning.ALearner import getDataset
 
     round = int(args.round)
 
-    # exp_name = strategy_name + '_seed' + str(seed)
-    # sub_path = os.path.join(general_path, exp_name)
-    # if not os.path.exists(sub_path):
-    #     os.makedirs(sub_path)
-
-    # save_args(args, sub_path, 'args')
-    # save_args(train_args, sub_path, 'train_args')
-
-    # if args.print_to_file:
-    #     orig_stdout = sys.stdout
-    #     log_file = open(os.path.join(sub_path, 'logs.txt'), 'w')
-    #     sys.stdout = log_file
-
     writer = SummaryWriter(log_dir=internal_logdir)
-
-    # result_file = open(sub_path + '.csv', 'w')
-    # result_writer = csv.writer(result_file, quoting=csv.QUOTE_ALL)
 
     # set seed
     set_seeds(seed)
 
-    # # # load dataset
-    # DATASET_NAME="MNIST_pixano_v5"
-    # library_dir='/home/melissap/_pixano_datasets_'
-    # import_dir =os.path.join(library_dir , DATASET_NAME)
-    # import_dir =os.path.join(str(args.data_dir) , str(args.data_name))
-
     database = lancedb.connect(Path(str(args.data_dir)))
-    # round = getLastRound(database)
-
-    # sys.exit()
-
-    # import pdb
-    # pdb.set_trace()
 
     tr_X,tr_Y,tr_lb_X, tr_lb_Y, te_X, te_Y, num_classes = getDataset(database)
 
     if train_params['n_label']==None:
         train_params['n_label'] = num_classes
 
-    # import pdb
-    # pdb.set_trace()
-
     # post process
     idxs_lb = np.zeros(len(tr_X), dtype=bool)
     idxs_lb[[i for i,xtr in enumerate(tr_X) if xtr in tr_lb_X]] = True
 
     X_val,Y_val = [], []
-    # idxs_lb = np.array([True for i in range(len(Y_tr))],dtype=bool)
 
     n_pool = len(tr_Y)
     n_test = len(te_Y)
@@ -599,15 +562,10 @@ def al_train_sub_experiment(args, train_args, train_params, strategy_name, gener
         # transforms.ToTensor(),
         # transforms.Normalize((0.1307,), (0.3081,))
     ]) 
-# # transform = transforms.Compose([ transforms.PILToTensor() ] 
-#     import pdb
-#     pdb.set_trace()
+    # transform = transforms.Compose([ transforms.PILToTensor() ] 
 
     print("Loading data ...")
-    # X_tr = torch.stack([transform(Image.open(x).convert('L')) for x in tr_X]).squeeze(1)
-    # Y_tr = torch.tensor([int(y) if y else -1 for y in tr_Y ], dtype=torch.int64)
-    # X_te = torch.stack([transform(Image.open(x).convert('L')) for x in te_X]).squeeze(1)
-    # Y_te = torch.tensor([int(y) for y in te_Y], dtype=torch.int64)
+    
 # REQUIRES A FIX
     if "mnist" in str(args.data_name).lower():
         X_tr = torch.stack([transform(Image.open(x)) for x in tr_X]).squeeze(1)
@@ -615,26 +573,15 @@ def al_train_sub_experiment(args, train_args, train_params, strategy_name, gener
         X_te = torch.stack([transform(Image.open(x)) for x in te_X]).squeeze(1)
         Y_te = torch.tensor([int(y) for y in te_Y], dtype=torch.int64)
     elif "cifar" in str(args.data_name).lower():
-        # import pdb
-        # pdb.set_trace()
         X_tr = np.array([cv2.cvtColor(cv2.imread(x),cv2.COLOR_BGR2RGB) for x in tr_X],dtype=np.uint8)
         Y_tr = torch.tensor([int(y) if y else -1 for y in tr_Y ], dtype=torch.int64)
         X_te = np.array([cv2.cvtColor(cv2.imread(x),cv2.COLOR_BGR2RGB) for x in te_X],dtype=np.uint8)
         Y_te = torch.tensor([int(y) for y in te_Y], dtype=torch.int64)
 
-        # X_tr = torch.stack([transform(Image.open(x)).permute(1, 2, 0) for x in tr_X]).squeeze(1)
-        # Y_tr = torch.tensor([int(y) if y else -1 for y in tr_Y ], dtype=torch.int64)
-        # X_te = torch.stack([transform(Image.open(x)).permute(1, 2, 0) for x in te_X]).squeeze(1)
-        # Y_te = torch.tensor([int(y) for y in te_Y], dtype=torch.int64)
-
     print('number of labeled pool: {}'.format(idxs_lb.sum()))
     print('number of unlabeled pool: {}'.format(n_pool - idxs_lb.sum()))
     print('number of validation pool: {}'.format(len(Y_val)))
     print('number of testing pool: {}'.format(n_test))
-
-    # for cifar
-    # (Pdb) X_tr.shape
-    # (50000, 32, 32, 3)
 
     print("Data loaded ...")
 
@@ -646,8 +593,6 @@ def al_train_sub_experiment(args, train_args, train_params, strategy_name, gener
         train_params['emb_size'] = train_args.emb_size  #256
         train_params['dim'] = np.shape(X_tr)[1:]
     args.n_label = train_params['n_label'] 
-
-    # np.save(open(os.path.join(sub_path, 'query_0.np'), 'wb'), idxs_tmp[idxs_lb])
 
     # load network
     if train_args.model == 'baseline_cnn':
@@ -709,11 +654,6 @@ def al_train_sub_experiment(args, train_args, train_params, strategy_name, gener
         model = CDALModel(net, net_args, handler, train_params, writer, device, round=int(round),dataset=str(args.data_name),model='CDALModel', sampling='CDALSampling', weights_dir = WEIGHTS_DIR)
     else:
         model = Training(net, net_args, handler, train_params, writer, device, round=int(round),dataset=str(args.data_name), model=train_args.model, sampling=str(args.strategy), weights_dir = WEIGHTS_DIR)
-# IF ROUND == 0 init_model=True, otherwise load the weights
-# HERE LOAD THE WEIGHTS OF THE PREVIOUS ROUND
-    # import pdb
-    # pdb.set_trace()
-    # Y_tr[~idxs_lb] = torch.tensor(-1,dtype=torch.int64)  # <---------------------------------------------------------- discarded change
 
     if (str(args.mode) == "train"):
 
@@ -729,14 +669,6 @@ def al_train_sub_experiment(args, train_args, train_params, strategy_name, gener
         acc = np.zeros(round + 1)
         acc[0] = 1.0 * (Y_te == P).sum().item() / len(Y_te)
         print('Round 0\ntesting accuracy {}'.format(acc[0]))
-        # writer.add_scalar('test_accuracy', acc[0], 0)
-
-        # result_writer.writerow([acc[0], 0.])
-        # result_file.flush()
-
-# import pdb
-# pdb.set_trace()
-        #   File "/home/melissap/Desktop/LAGO/3.githubs/integration/3.integration_Demo/pixano/ActiveLearning/certh_integration/231031_mnist/alpha_mix_active_learning/_main_train.py", line 711, in al_train_sub_experiment
 
         if int(round)==0: #not os.path.exists(str(args.train_out)) or
             accuracy = pd.DataFrame(acc.tolist(),index=['round_0'],columns=["accuracy"])
@@ -784,114 +716,12 @@ def al_train_sub_experiment(args, train_args, train_params, strategy_name, gener
 
             get_query_diversity_uncertainty(s_embddings, s_gt_y, s_y, s_probs, writer, round)
 
-        # if args.save_images:
-        #     all_embeds = np.zeros((Y_tr.size()[0], embeddings.size(1)), dtype=float)
-        #     all_embeds[~idxs_lb] = embeddings
-
-        #     visualise_results(all_embeds, q_idxs if candidate_idxs is None else candidate_idxs, Y_tr, q_idxs,
-        #                       os.path.join(sub_path, 'embedding_round_%d.ckp' % (round)))
-
-
-        # model.store_weights( round = rd ,dataset=str(args.data_name),model=train_args.model, sampling=str(args.strategy))
-        # update
-    
-# RETURN THE q_idxs
-
-        # tr_X[q_idxs]
-
-        # import pdb
-        # pdb.set_trace()
+        # RETURN THE q_idxs
         query_results = [os.path.basename(tr_X[idx]) for idx in q_idxs]
         queries = pd.DataFrame(query_results, columns=["query_results"])
-        queries.to_csv(str(args.query_out))
-        # save q_idxs in csv file
-
-#     for rd in range(1, args.n_round + 1):                                                                   
-#     # for rd in range(1, args.n_round + 1):
-
-#         # somehow increases reproductibility, but not exact results.
-#         # May be disabled if needed.
-#         # https://github.com/pytorch/pytorch/issues/4333#issuecomment-354434176
-#         # seed+=trained_epochs
-#         # torch.manual_seed(seed)
-#         # import pdb
-#         # pdb.set_trace()
-
-#         print('Round {}'.format(rd))
-
-#         start_time = time.time()
-
-#         budget = args.n_query * int(math.pow(args.query_growth_ratio, rd - 1))
-#         print('query budget: %d' % budget)
-
-#         q_idxs, embeddings, preds, probs, u_idxs, candidate_idxs = strategy.query(budget)                   # gives the resulted queries
-
-#         duration = time.time() - start_time
-
-#         query_result = torch.zeros(Y_tr.size(), dtype=torch.bool)
-#         query_result[q_idxs] = True
-
-#         if preds is not None:
-#             s_gt_y = strategy.Y[q_idxs]
-#             s_y = preds[u_idxs]
-#             s_embddings = embeddings[u_idxs]
-#             s_probs = probs[u_idxs]
-
-#             get_query_diversity_uncertainty(s_embddings, s_gt_y, s_y, s_probs, writer, rd)
-
-#         if args.save_images:
-#             all_embeds = np.zeros((Y_tr.size()[0], embeddings.size(1)), dtype=float)
-#             all_embeds[~idxs_lb] = embeddings
-
-#             visualise_results(all_embeds, q_idxs if candidate_idxs is None else candidate_idxs, Y_tr, q_idxs,
-#                               os.path.join(sub_path, 'embedding_round_%d.ckp' % (rd)))
-
-
-#         # model.store_weights( round = rd ,dataset=str(args.data_name),model=train_args.model, sampling=str(args.strategy))
-#         # update
-#         # import pdb
-#         # pdb.set_trace() 
-# # HERE STORE THE WEIGHTS OF THE CURRENT ROUND && RETURN THE q_idxs
-
-#         idxs_lb[q_idxs] = True
-#         strategy.update(idxs_lb)
-
-#         print('training with %d labeled samples.' % idxs_lb.sum())
-#         strategy.train(str(rd))
-
-#         # round accuracy
-#         P = strategy.predict(X_te, Y_te)
-#         acc[rd] = 1.0 * (Y_te == P).sum().item() / len(Y_te)
-
-#         if args.save_checkpoints:
-#             torch.save(strategy.model.clf.state_dict(), os.path.join(sub_path, 'model_round_%d.pt' % (rd)))
-#         np.save(open(os.path.join(sub_path, 'query_' + str(rd) + '.np'), 'wb'), q_idxs)
-
-#         print('testing accuracy {}'.format(acc[rd]))
-#         writer.add_scalar('test_accuracy', acc[rd], rd)
-#         result_writer.writerow([acc[rd], duration])
-#         result_file.flush()
-
-#         # Store idxs in file 
-#         result_idxs=pd.DataFrame(torch.where(query_result==True)[0].numpy())
-#         resultspath=os.path.join(CWD,"_queryResults","results_round-"+str(rd)+".csv")
-#         result_idxs.to_csv(resultspath,index=False,header=False)
-
-#         resultspath=os.path.join(CWD,"_queryResults","results_round-"+str(rd)+".txt")
-#         with open(resultspath, 'w') as f:
-#             for line in result_idxs:
-#                 f.write(f"{line}\n")
-        
-#         # import pdb
-#         # pdb.set_trace()
-#         # store 
+        queries.to_csv(str(args.query_out)) # save q_idxs in csv file
 
     writer.close()
-    # result_file.close()
-
-    # if args.print_to_file:
-    #     sys.stdout = orig_stdout
-    #     log_file.close()
 
     print(f"\n\n######################################################### AL ROUND {round} mode {str(args.mode)} : END ##########################################################\n\n")
 
