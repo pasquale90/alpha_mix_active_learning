@@ -7,7 +7,6 @@ pandas
 scikit-learn
 scipy
 seaborn
-sklearn
 tensorboard
 torch
 torchattacks
