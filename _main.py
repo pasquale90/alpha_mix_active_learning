@@ -459,7 +459,7 @@ def supervised_learning(args):
     if is_openml(args.data_name):
         train_params = train_params_pool['openml']
     # else:
-#REQUIRES FIX - FIX THE TRAINPARAMS
+#TODO DEFINE TRAIN PARAMS FOR EACH NEW DATASET. 
     elif "mnist" in str(args.data_name).lower():
         train_params = train_params_pool["MNIST"] # for now, train_params_pool["MNIST"]["n_label"] is set to None
     elif "cifar" in str(args.data_name).lower():
@@ -566,7 +566,7 @@ def al_train_sub_experiment(args, train_args, train_params, strategy_name, gener
 
     print("Loading data ...")
     
-# REQUIRES A FIX
+#TODO PARSE NEW DATASETS. 
     if "mnist" in str(args.data_name).lower():
         X_tr = torch.stack([transform(Image.open(x)) for x in tr_X]).squeeze(1)
         Y_tr = torch.tensor([int(y) if y else -1 for y in tr_Y ], dtype=torch.int64)
@@ -640,7 +640,7 @@ def al_train_sub_experiment(args, train_args, train_params, strategy_name, gener
                     'avgpool_patchtokens': train_args.vit_avgpool_patchtokens,
                     'pretrained_weights': train_args.vit_pretrained_weights}
     
-# REQUIRES A FIX
+#TODO DATALOADER FOR NEW DATASETS. 
     # handler = get_handler(args.data_name)
     if "mnist" in str(args.data_name).lower():
         handler = get_handler("MNIST") # requires a generalized fix
