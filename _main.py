@@ -647,9 +647,21 @@ def al_train_sub_experiment(args, train_args, train_params, strategy_name, gener
     elif "cifar" in str(args.data_name).lower():
         handler = get_handler("CIFAR10") # requires a generalized fix
 
-    use_cuda = torch.cuda.is_available()
+    if (str(args.device) == 'GPU'):
+        use_cuda = torch.cuda.is_available()
+        if use_cuda:
+            print("GPU found available on the current machine")
+        else:
+            print("No available GPU found on current machine. Initializing CPU.")
+    elif (str(args.device) == 'CPU'):
+        use_cuda = False
     print('Using %s device.' % ("cuda" if use_cuda else "cpu"))
     device = torch.device("cuda" if use_cuda else "cpu")
+    print("Device initialized as :", device)
+
+    import pdb
+    pdb.set_trace()
+
     if strategy_name == 'CDALSampling':
         model = CDALModel(net, net_args, handler, train_params, writer, device, round=int(round),dataset=str(args.data_name),model='CDALModel', sampling='CDALSampling', weights_dir = WEIGHTS_DIR)
     else:
@@ -839,6 +851,8 @@ if __name__ == "__main__":
     parser.add_argument('--seeds', type=int, nargs='+', default=[1, 10, 100, 1000, 10000])
     parser.add_argument('--init_lb_method', type=str, default='general_random',
                         choices=['general_random', 'per_class_random'])
+
+    parser.add_argument('--device', type=str, default='CPU',choices=['CPU', 'GPU'] )
 
     parser.add_argument('--log_dir', type=str, default=log_directory)
     parser.add_argument('--save_checkpoints', action='store_const', default=False, const=True)
