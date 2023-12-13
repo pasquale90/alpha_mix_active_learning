@@ -659,9 +659,6 @@ def al_train_sub_experiment(args, train_args, train_params, strategy_name, gener
     device = torch.device("cuda" if use_cuda else "cpu")
     print("Device initialized as :", device)
 
-    import pdb
-    pdb.set_trace()
-
     if strategy_name == 'CDALSampling':
         model = CDALModel(net, net_args, handler, train_params, writer, device, round=int(round),dataset=str(args.data_name),model='CDALModel', sampling='CDALSampling', weights_dir = WEIGHTS_DIR)
     else:
