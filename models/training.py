@@ -128,7 +128,11 @@ class Training(object):
         for state in self.optimizer.state.values():
             for k, v in state.items():
                 if torch.is_tensor(v):
-                    state[k] = v.cuda()
+                    try:                    # if (self.device == "cuda?")      
+                        state[k] = v.cuda()
+                    except:
+                        state[k] = v
+#TODO : remove try with condition on the self.device...
 
         # self.clf.eval()
         # print(f"\n\n Round {round} Model parameters when LOADING ... /n{[param for param in self.clf.parameters()][0]}\n{[param for param in self.clf.parameters()][-1]}\n\n")
